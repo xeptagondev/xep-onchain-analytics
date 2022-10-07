@@ -18,7 +18,7 @@ app.layout = html.Div([
               [Input('url', 'pathname')])
 
 def display_page(pathname):
-    if pathname == '/charts':
+    if pathname == '/analytics':
         return create_charts()
     if pathname == '/anomaly':
         return create_page_3()

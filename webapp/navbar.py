@@ -7,7 +7,7 @@ xeptagon_logo = "https://www.xeptagon.com/assets/images/logos/logo-transparent.s
 nav = dbc.Nav(
     [
         dbc.NavItem(dbc.NavLink("Home", active='exact', href="/")),
-        dbc.NavItem(dbc.NavLink("Charts", active='exact', href="/charts")),
+        dbc.NavItem(dbc.NavLink("Analytics", active='exact', href="/analytics")),
         dbc.NavItem(dbc.NavLink("Anomaly Detection", active='exact', href="/anomaly")),
     ]
 )
@@ -29,7 +29,7 @@ def create_navbar():
                 nav
             ],
         ),
-        color="light",
+        color= "white",
         dark=False,
         style = {'height': '100px'}   
     )
