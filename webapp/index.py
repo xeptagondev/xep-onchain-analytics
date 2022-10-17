@@ -2,7 +2,7 @@ from dash import html, dcc
 from dash.dependencies import Input, Output
 from home import create_page_home
 from charts import create_charts
-from anomaly import create_page_3
+from anomaly import create_anomaly
 from app import app
 
 server = app.server
@@ -21,7 +21,7 @@ def display_page(pathname):
     if pathname == '/analytics':
         return create_charts()
     if pathname == '/anomaly':
-        return create_page_3()
+        return create_anomaly()
     else:
         return create_page_home()
 

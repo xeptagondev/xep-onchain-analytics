@@ -1,0 +1,26 @@
+,metric_name,description
+0,Price ($),Current price per unit of Bitcoin in USD
+1,Transaction Volume (USD),The total monetary value of all on-chain transactions
+2,Circulating Supply,Amount of Bitcoin circulating in the market and in the general public's hands
+3,Maximum Supply,Maximum amount of tokens that will ever exist
+4,Market Capitalisation,The market value of all coins in the network. It is calculated by taking the product of : circulating supply x current Bitcoin price 
+5,Realised Capitalisation,"A variation of market capitalization that values each UTXO based on the price when it was last moved, as opposed to its current value. It represents the realized value of all the coins in the network, as opposed to their market value."
+6,No. of Unique Addresses,The total number of unique addresses used on the blockchain
+7,Exchange Reserve,The total number of coins held in exchange i.e. stored in wallets
+8,Transaction Volume (BTC),The total number of coins transferred through on-chain transactions
+9,Transaction Count,The total number of confirmed on-chain transactions
+10,No. of Active Addresses,Number of unique addresses that are active - includes both senders and receivers
+11,Fully Diluted Market Cap,The market value of all coins in the network if maximum supply is in circulation
+12,Market Value to Realised Value Ratio (MVRV),Represents the ratio between Market Capitalisation and Realised Capitalisation. This serves as an indicator for whether the current price is overvalued or undervalued.
+13,Relative Unrealised Profit,Unrealized Profit represents the total profit accumulated by UTXOs which were created (i.e. realized) when the price of the asset was lower than the current price. Relative Unrealised Profit is calculated by dividing the total gross unrealized profit of UTXOs by the Market Cap.
+14,Net Unrealised Profit and Loss (NUPL),NUPL looks at the difference between Unrealized Profit and Unrealized Loss to determine whether the network as a whole is currently in a state of profit or loss. It is calculated by (Market Cap - Realised Cap)/Market Cap.
+15,Net Realised Profit/Loss,"The net realized profit/loss for all coins spent over the timeframe considered. Values > 0 means that profits are being realized on-chain i.e. On average, price of coins spent > price when coins were created. Values < 0 means losses are being realized on-chain i.e. On average, price of coins spent < price when coins were created."
+16,Spent Output Profit Ratio (SOPR),SOPR represents the aggregate realized profit or loss on a particular day. Values > 1 implies that coins moved that day are selling at a profit and vice versa for values < 1.
+17,Network Value to Transaction (NVT),"NVT represents the ratio between Market Capitalisation and transferred volume. An upward trend will indicate that the coin pricing is at a premium, whereby Market Capitalisation is growing at a pace greater than that of transferred volume. A downward trend will indicate that the coin pricing is at a discount, whereby Market Capitalisation is growing at a pace smaller than that of transferred volume. A constant trend will mean that both Market Capitalisation and transferred volume are in equlibrium."
+18,Velocity,Measure of how quickly units are circulating in the network. It is also the inverse of NVT ratio.
+19,Market Cap to Thermocap Ratio,Thermocap is the aggregate amount of coins paid to miners. This ratio will indicate if the asset's price is currently trading at a premium relative to the total security spend by miners.
+20,Coin-Days-Destroyed (CDD),A measure of ecnomic activity which gives more weight to coins which have not been spent for a long time. E.g. A UTXO of 2BTC that is dormant for 100 days will have a CDD of 200 coin days.
+21,Balanced Price,"Difference between Realized price and Transferred price. Transfer Price is the cumulative sum of Coin Days Destroyed in USD, adjusted by circulating supply and total time since Bitcoin's establishement. Balanced Priice attempts to detect major cycle bottoms."
+22,Average Coin Dormancy,The average number of days each spent coin had been dormant for before it was moved
+23,Average Transaction Value (ATV),The fraction of total transaction value over the total number of transactions for each day
+24,Difficulty Ribbon,Uses moving averages (MA) of Bitcoin mining difficulty i.e. difficulty in mining a block
