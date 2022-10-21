@@ -9,6 +9,37 @@
     display: block;
 }
 
+.date-picker-div .date-picker-text {  
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 3px 5px 3px;
+    /* positioning tooltip at top */
+    position: absolute;
+    z-index: 1;
+    width: 240px;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -120px;  
+} 
+
+.date-picker-div:hover .date-picker-text {  
+    visibility: visible;  
+}
+
+/* arrow for tooltip of date picker */  
+.date-picker-div .date-picker-text::after {
+    content: " ";
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+  }
 .list-group-item-action:hover {
     color: #336291c0;
 }

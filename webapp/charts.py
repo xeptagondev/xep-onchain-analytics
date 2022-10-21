@@ -1,22 +1,34 @@
-from calendar import calendar
+import dash
 from dash import html, dcc, ALL, ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
-import duckdb as ddb
 import pandas as pd
 import plotly.express as px
 from datetime import date, datetime
+import re
+import duckdb as ddb
+import psycopg2
 
+dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
 
 # Connecting to database
 ddbconn = ddb.connect("/home/ec2-user/bitcoin-basic-metrics/bitcoin.duckdb", read_only=True)
 ddbc = ddbconn.cursor()
 
+psqlconn = psycopg2.connect(database="bitcoin",
+                            host="localhost",
+                            user="ec2-user",
+                            password="password",
+                            port="5432")
+
+psqlcursor = psqlconn.cursor()
+
 # Dataframe for our metrics and indicators
-df_metrics = pd.read_sql("SELECT * FROM basic_metrics", ddbconn)
+basic_metrics = pd.read_sql("SELECT * FROM basic_metrics", psqlconn)
+computed_metrics = pd.read_sql("SELECT * FROM computed_metrics", psqlconn)
 
 # Metrics and their descriptions
 metrics_desc = pd.read_csv("assets/metrics_desc.csv")
@@ -82,7 +94,9 @@ content = html.Div([
                 html.Div([
                     html.H5(id='graph-title', style = {'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
                     dbc.Button(id='toast-toggle', n_clicks=0, className="bi bi-question-circle rounded-circle", color='white', style={'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
-                    html.Div(dcc.DatePickerRange(
+                    html.Div([
+                        html.Span("Select your preferred date range.", className='date-picker-text', style = {'font-size':'12px'}),
+                            dcc.DatePickerRange(
                             id='my-date-picker-range',
                             clearable = True,
                             min_date_allowed=date(2009, 1, 3),
@@ -90,8 +104,7 @@ content = html.Div([
                             start_date_placeholder_text='MM/DD/YY',
                             end_date_placeholder_text='MM/DD/YY',
                         ),
-                        style = {'display': 'inline-block', 'vertical-align': 'middle', 'float':'right'}
-                    )
+                    ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
                 
                 html.Div(
@@ -101,19 +114,17 @@ content = html.Div([
                             header="Metric Description",
                             dismissable=True,
                             is_open=False,
-                            style = {'width':'500px'}
+                            style = {'width':'48vw'}
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
 
-                dcc.Graph(id="analytics-graph"),
-                #html.P('Metric Description', style={'textDecoration': 'underline'}),
-                #html.P('Current price per unit of Bitcoin in USD', id='metric-desc')
+                dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
 
             ], width = 9, style = {'padding-right':'40px', 'padding-left':'30px', 'padding-top': '20px'})
 
     ], justify = 'evenly', style={'height': '100vh', 'border-top': '2px solid grey'})
-
 ])
+
 
 
 def create_charts():
@@ -172,11 +183,11 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
                 dict(count=1,
-                    label="1m",
+                    label="1M",
                     step="month",
                     stepmode="backward"),
                 dict(count=6,
-                    label="6m",
+                    label="6M",
                     step="month",
                     stepmode="backward"),
                 dict(count=1,
@@ -184,10 +195,10 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
                     step="year",
                     stepmode="todate"),
                 dict(count=1,
-                    label="1y",
+                    label="1Y",
                     step="year",
                     stepmode="backward"),
-                dict(step="all")
+                dict(label="ALL", step="all")
             ])
         ),
         rangeslider=dict(
@@ -196,31 +207,43 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         type="date"
     )
     if ctx.triggered_id is None or 1 not in n_clicks_list:
-        fig = px.line(df_metrics, x="Date", y="Price ($)")
+        fig = px.line(basic_metrics, x="Date", y="Price ($)", color_discrete_sequence=["#0a275c"])
         fig.update_layout(
-            xaxis=default
+          xaxis=default
         )
+        
     elif ctx.triggered_id is not None or 1 in n_clicks_list:
-        clicked_id = ctx.triggered_id.index
         # print for debugging
-        print(clicked_id)
-        print(n_clicks_list.index(1))
-        print(id_list[n_clicks_list.index(1)]['index'])
-        fig = px.line(df_metrics, x="Date", y=id_list[n_clicks_list.index(1)]['index'])
+        # print(clicked_id)
+        # print(n_clicks_list.index(1))
+        # print(id_list[n_clicks_list.index(1)]['index'])
+        clicked = id_list[n_clicks_list.index(1)]['index']
+        if metrics_desc[metrics_desc['metric_name'] == clicked]['is_computed'].values[0]:
+            fig = px.line(computed_metrics, x="Date", y=clicked, color_discrete_sequence=["#0a275c"])
+        else:
+            fig = px.line(basic_metrics, x="Date", y=clicked, color_discrete_sequence=["#0a275c"])
         fig.update_layout(
             xaxis=default
         )
     # update graph based on date range selected by user
     if start is not None and end is not None:
-        filtered_df = df_metrics[df_metrics['Date'].between(start, end)]
-        fig = px.line(filtered_df, x="Date", y=curr_metric)
-    # return default range when datepicker is cleared
+        if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
+            filtered_df = computed_metrics[computed_metrics['Date'].between(start, end)]
+            fig = px.line(filtered_df, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+        else:
+            filtered_df = basic_metrics[basic_metrics['Date'].between(start, end)]
+            fig = px.line(filtered_df, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+    # return default range when datepicker is empty/cleared
     elif start is None and end is None:
-        fig = px.line(df_metrics, x="Date", y=curr_metric)
+        if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
+            fig = px.line(computed_metrics, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+        else:
+            fig = px.line(basic_metrics, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
         fig.update_layout(
             xaxis=default
         )
     fig.update_layout(plot_bgcolor='white')
+    fig.update_xaxes(rangeselector_font_size = 15)
     
     return fig
 
@@ -234,7 +257,7 @@ def update_title_desc(n_clicks_list):
     if not ctx.triggered or 1 not in n_clicks_list:
         return "Price ($)", metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['description']
     clicked_id = ctx.triggered_id.index
-    return clicked_id, metrics_desc[metrics_desc['metric_name'] == clicked_id]['description']  
+    return clicked_id, metrics_desc[metrics_desc['metric_name'] == clicked_id]['description']
 
 # Toggling metric's description to be shown or not
 @app.callback(

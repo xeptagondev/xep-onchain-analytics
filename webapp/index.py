@@ -4,6 +4,7 @@ from home import create_page_home
 from charts import create_charts
 from anomaly import create_anomaly
 from app import app
+import dash
 
 server = app.server
 app.config.suppress_callback_exceptions = True

@@ -1,8 +1,10 @@
+import dash
 from dash import html
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
 
+dash.register_page(__name__, path='/', name="Home")
 nav = create_navbar()
 
 content = html.Div([
