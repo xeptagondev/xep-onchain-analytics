@@ -6,7 +6,7 @@ from anomaly import create_anomaly
 from app import app
 import dash
 
-server = app.server
+application = app.server
 app.config.suppress_callback_exceptions = True
 
 app.layout = html.Div([
