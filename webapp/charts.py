@@ -15,11 +15,11 @@ dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
 
 # Connecting to database
-ddbconn = ddb.connect("/home/ec2-user/bitcoin-basic-metrics/bitcoin.duckdb", read_only=True)
-ddbc = ddbconn.cursor()
+# ddbconn = ddb.connect("/home/ec2-user/bitcoin-basic-metrics/bitcoin.duckdb", read_only=True)
+# ddbc = ddbconn.cursor()
 
 psqlconn = psycopg2.connect(database="bitcoin",
-                            host="localhost",
+                            host="44.206.88.106",
                             user="ec2-user",
                             password="password",
                             port="5432")
@@ -42,18 +42,21 @@ content = html.Div([
                 # Select Cryptocurrency 
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
-                    dbc.DropdownMenu(
-                        [ dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", disabled = True),
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Tether (USDT)", id="Tether", disabled = True),
-                        ],
-                        id = 'cryptocurrency-select',
-                        label = 'Bitcoin (BTC)',
-                        color = '#0d1e26',
-                        toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
-                    )
+                    html.Div([
+                        html.Span("Other coins to be added in future.", className='disabled-info', style = {'font-size':'12px'}),
+                        dbc.DropdownMenu(
+                            [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
+                            dbc.DropdownMenuItem(divider=True),
+                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", disabled = True),
+                            dbc.DropdownMenuItem(divider=True),
+                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether", disabled = True),
+                            ],
+                            id = 'cryptocurrency-select',
+                            label = 'Bitcoin (BTC)',
+                            color = '#0d1e26',
+                            toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
+                        )
+                    ], className='disabled-info-div', style = {'display':'block', 'position': 'relative', 'width': '180px', 'margin':'auto'})
                 ], style={'text-align':'center', 'padding-bottom':'15px'}),
                 
                 # Search Metrics
@@ -89,10 +92,10 @@ content = html.Div([
 
             ], width = 3, style = {'background-color':'#E8EBEE99',  'border-right':'2px solid grey', 'padding-top': '20px'}),
 
-            # Area to display selected indicator's graph
+            # Display column
             dbc.Col([
                 html.Div([
-                    html.H5(id='graph-title', style = {'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
+                    html.H5(id='graph-title', style = {'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0', 'color':'#0a275c'}),
                     dbc.Button(id='toast-toggle', n_clicks=0, className="bi bi-question-circle rounded-circle", color='white', style={'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
                     html.Div([
                         html.Span("Select your preferred date range.", className='date-picker-text', style = {'font-size':'12px'}),
@@ -106,19 +109,30 @@ content = html.Div([
                         ),
                     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
-                
+                # area for toggable toast to display metric's formula
                 html.Div(
                     dbc.Toast(
-                            [html.P(id='metric-desc')],
+                            [dcc.Markdown(mathjax=True, id='metric-formula')],
                             id="toast",
-                            header="Metric Description",
+                            header="How is it Calculated?",
                             dismissable=True,
                             is_open=False,
-                            style = {'width':'48vw'}
+                            style = {'width':'30vw'}
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
-
-                dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
+                # area for metric description
+                dbc.Card([
+                    dbc.CardHeader("Metric Description", style={'font-weight':'bold'}),
+                    dbc.CardBody(
+                        [
+                            html.P(id='metric-desc', className="card-text"),
+                        ]
+                    ),
+                ], style = {'width':'46vw'}),
+                # area to display selected metric's graph
+                dcc.Loading(
+                    dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
+                )
 
             ], width = 9, style = {'padding-right':'40px', 'padding-left':'30px', 'padding-top': '20px'})
 
@@ -251,13 +265,14 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
 @app.callback(
     Output('graph-title', 'children'),
     Output('metric-desc', "children"),
+    Output('metric-formula', 'children'),
     Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'),
 )
 def update_title_desc(n_clicks_list):
     if not ctx.triggered or 1 not in n_clicks_list:
-        return "Price ($)", metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['description']
+        return "Price ($)", metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['description'], metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['formula']
     clicked_id = ctx.triggered_id.index
-    return clicked_id, metrics_desc[metrics_desc['metric_name'] == clicked_id]['description']
+    return clicked_id, metrics_desc[metrics_desc['metric_name'] == clicked_id]['description'], metrics_desc[metrics_desc['metric_name'] == clicked_id]['formula']
 
 # Toggling metric's description to be shown or not
 @app.callback(

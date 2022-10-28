@@ -13,7 +13,6 @@ nav = dbc.Nav(
         dbc.NavItem(dbc.NavLink("Anomaly Detection", active='exact', href="/anomaly")),
     ]
 )
-print(dash.page_registry)
 
 def create_navbar():
     navbar = dbc.Navbar(

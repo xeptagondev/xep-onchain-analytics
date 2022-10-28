@@ -20,7 +20,7 @@ nav = create_navbar()
 engine = create_engine('postgresql://ec2-user:password@localhost:5432/bitcoin')
 
 psqlconn = psycopg2.connect(database="bitcoin",
-                            host="localhost",
+                            host="44.206.88.106",
                             user="ec2-user",
                             password="password",
                             port="5432")
@@ -42,7 +42,9 @@ content = html.Div([
                 # Select Cryptocurrency 
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
-                    dbc.DropdownMenu(
+                    html.Div([
+                        html.Span("Other coins to be added in future.", className='disabled-info', style = {'font-size':'12px'}),
+                        dbc.DropdownMenu(
                         [ dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-2"),
                         dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-2", disabled = True),
@@ -54,6 +56,7 @@ content = html.Div([
                         color = '#0d1e26',
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
                     )
+                    ], className='disabled-info-div', style = {'display':'block', 'position': 'relative', 'width': '180px', 'margin':'auto'})
                 ], style={'text-align':'center', 'padding-bottom':'15px'}),
 
                 # Detection type
@@ -109,7 +112,7 @@ content = html.Div([
                     #                     'font-size':15, 'z-index':'1', 'position':'absolute', 'height':'25px', 'width':'30px', 'padding':'0px 1px 3px'}),
                     #dcc.Graph(id="anomaly-graph", style= {'z-index':'-1', 'height': '80vh'}),
                     
-                    html.Div(id='outlier-graphs')
+                    dcc.Loading(html.Div(id='outlier-graphs'))
 
                 ], style= {'margin-top':'30px', 'width':'72vw', 'height':'70vh', 'overflow-y':'scroll'})
 

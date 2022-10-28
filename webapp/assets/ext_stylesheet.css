@@ -9,6 +9,39 @@
     display: block;
 }
 
+/* create hover tooltip for cryptocurrency dropdown */
+.disabled-info-div .disabled-info {
+    visibility: hidden;
+    background-color: #fff;
+    color: black;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 3px 5px 3px;
+    width: 160px;
+    /* positioning tooltip at right side */
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 105%; 
+}
+
+.disabled-info-div:hover .disabled-info {  
+    visibility: visible;  
+}
+
+/* arrow of cryptocurrency dropdown's tooltip */
+.disabled-info-div .disabled-info::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    right: 100%; /* To the left of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #fff transparent transparent;
+}
+
+/* create hover tooltip on top of date range picker */
 .date-picker-div .date-picker-text {  
     visibility: hidden;
     background-color: black;
@@ -29,7 +62,7 @@
     visibility: visible;  
 }
 
-/* arrow for tooltip of date picker */  
+/* arrow for tooltip of date range picker */  
 .date-picker-div .date-picker-text::after {
     content: " ";
     position: absolute;
@@ -39,7 +72,8 @@
     border-width: 5px;
     border-style: solid;
     border-color: black transparent transparent transparent;
-  }
+}
+
 .list-group-item-action:hover {
     color: #336291c0;
 }
