@@ -3,9 +3,11 @@ from dash import html
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
+from footer import create_footer
 
 dash.register_page(__name__, path='/', name="Home")
 nav = create_navbar()
+footer = create_footer()
 
 content = html.Div([
     dbc.Row([
@@ -21,14 +23,15 @@ content = html.Div([
         dbc.Col(
             html.Img(src = app.get_asset_url('homepg-icon.png'), style={'width': '80%', 'height':'90%'}),
             width=6, style = {'padding-top': '100px', 'padding-left':'60px'}
-        )
+        ),
     ], justify='evenly', style = {'border-top': '2px solid grey'})
 
-], style = {'position':'fixed', 'height': '100vh'})
+], style = {'padding-bottom':'60px'})
 
 def create_page_home():
     layout = html.Div([
         nav,
         content,
-    ])
+        footer
+    ], style={'min-height':'100%', 'position':'relative', 'overflow-x':'hidden'})
     return layout

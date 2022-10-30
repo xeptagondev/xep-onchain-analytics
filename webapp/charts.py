@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
+from footer import create_footer
 import pandas as pd
 import plotly.express as px
 from datetime import date, datetime
@@ -13,6 +14,7 @@ import psycopg2
 
 dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
+footer = create_footer()
 
 # Connecting to database
 # ddbconn = ddb.connect("/home/ec2-user/bitcoin-basic-metrics/bitcoin.duckdb", read_only=True)
@@ -42,21 +44,24 @@ content = html.Div([
                 # Select Cryptocurrency 
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
-                    html.Div([
-                        html.Span("Other coins to be added in future.", className='disabled-info', style = {'font-size':'12px'}),
-                        dbc.DropdownMenu(
-                            [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
-                            dbc.DropdownMenuItem(divider=True),
-                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", disabled = True),
-                            dbc.DropdownMenuItem(divider=True),
-                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether", disabled = True),
-                            ],
-                            id = 'cryptocurrency-select',
-                            label = 'Bitcoin (BTC)',
-                            color = '#0d1e26',
-                            toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
-                        )
-                    ], className='disabled-info-div', style = {'display':'block', 'position': 'relative', 'width': '180px', 'margin':'auto'})
+                    dbc.DropdownMenu(
+                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
+                        dbc.DropdownMenuItem(divider=True),
+                        html.Div([
+                            html.Span("to be implemented in future", className='disabled-info'),
+                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", disabled=True),
+                        ], className='disabled-coin'),
+                        dbc.DropdownMenuItem(divider=True),
+                        html.Div([
+                            html.Span("to be implemented in future", className='disabled-info'),
+                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether", disabled=True),
+                        ], className='disabled-coin-2'),
+                        ],
+                        id = 'cryptocurrency-select',
+                        label = 'Bitcoin (BTC)',
+                        color = '#0d1e26',
+                        toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
+                    )
                 ], style={'text-align':'center', 'padding-bottom':'15px'}),
                 
                 # Search Metrics
@@ -75,20 +80,6 @@ content = html.Div([
                         style={'margin-top':'15px', 'overflow-y':'scroll', 'width':'350px', 'height': '450px'})
                     
                 ], justify = 'center', style = {'padding':'25px', 'border-top': '2px solid grey'}),
-
-                # dbc.Row([
-                #     html.P("Select a date range", style = {'align':'left'}),
-                #     html.Div([
-                #         dcc.DatePickerRange(
-                #             id='my-date-picker-range',
-                #             clearable = True,
-                #             min_date_allowed=date(2009, 1, 3),
-                #             max_date_allowed=datetime.now(),
-                #             start_date_placeholder_text='MM/DD/YY',
-                #             end_date_placeholder_text='MM/DD/YY',
-                #         ),
-                #     ]),
-                # ], justify = 'center', style = {'text-align':'left', 'padding': '0px 25px 25px 25px'})
 
             ], width = 3, style = {'background-color':'#E8EBEE99',  'border-right':'2px solid grey', 'padding-top': '20px'}),
 
@@ -121,31 +112,29 @@ content = html.Div([
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
                 # area for metric description
-                dbc.Card([
-                    dbc.CardHeader("Metric Description", style={'font-weight':'bold'}),
-                    dbc.CardBody(
-                        [
-                            html.P(id='metric-desc', className="card-text"),
-                        ]
-                    ),
-                ], style = {'width':'46vw'}),
+                html.Div([
+                    html.P("Metric Description", style={'font-weight':'bold', 'textDecoration':'underline'}),
+                    html.P(id='metric-desc'),
+                ]),
                 # area to display selected metric's graph
                 dcc.Loading(
                     dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
+                    color='#0a275c'
                 )
 
             ], width = 9, style = {'padding-right':'40px', 'padding-left':'30px', 'padding-top': '20px'})
 
-    ], justify = 'evenly', style={'height': '100vh', 'border-top': '2px solid grey'})
-])
+    ], justify = 'evenly', style={'border-top': '2px solid grey', 'border-bottom': '1px solid grey'})
+], style = {'padding-bottom':'60px'})
 
 
 
 def create_charts():
     layout = html.Div([
         nav,
-        content
-    ])
+        content,
+        footer
+    ], style={'min-height':'100%', 'position':'relative', 'overflow-x':'hidden'})
     return layout
 
 
@@ -216,7 +205,9 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
             ])
         ),
         rangeslider=dict(
-            visible=True
+            visible=True,
+            bgcolor="#d0e0e5",
+            thickness=0.1 
         ),
         type="date"
     )

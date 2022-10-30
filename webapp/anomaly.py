@@ -1,9 +1,10 @@
 import dash
-from dash import html, dcc, ALL, ctx
+from dash import html, dcc, ALL, ctx, dash_table
 from dash.dependencies import Input, Output, ALL
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
+from footer import create_footer
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -15,6 +16,7 @@ from sqlalchemy import create_engine
 
 dash.register_page(__name__, path='/anomaly', name="Anomaly Detection")
 nav = create_navbar()
+footer = create_footer()
 
 # Connecting to PostgreSQL Database
 engine = create_engine('postgresql://ec2-user:password@localhost:5432/bitcoin')
@@ -31,6 +33,7 @@ psqlcursor = psqlconn.cursor()
 df_isoForest = pd.read_sql('SELECT * FROM "isoForest_outliers"', psqlconn)
 df_autoEncoder = pd.read_sql('SELECT * FROM "autoEncoder_outliers"', psqlconn)
 df_kmeans = pd.read_sql('SELECT * FROM "kmeans_outliers"', psqlconn)
+df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
@@ -42,21 +45,25 @@ content = html.Div([
                 # Select Cryptocurrency 
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
-                    html.Div([
-                        html.Span("Other coins to be added in future.", className='disabled-info', style = {'font-size':'12px'}),
-                        dbc.DropdownMenu(
-                        [ dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-2"),
+                    dbc.DropdownMenu(
+                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-2"),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-2", disabled = True),
+                        html.Div([
+                            html.Span("to be implemented in future", className='disabled-info'),
+                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-2", disabled=True),
+                        ], className='disabled-coin'),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Tether (USDT)", id="Tether-2", disabled = True),
+                        html.Div([
+                            html.Span("to be implemented in future", className='disabled-info'),
+                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether-2", disabled=True),
+                        ], className='disabled-coin-2'),
                         ],
                         id = 'cryptocurrency-select-2',
                         label = 'Bitcoin (BTC)',
                         color = '#0d1e26',
+                        align_end = True,
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
                     )
-                    ], className='disabled-info-div', style = {'display':'block', 'position': 'relative', 'width': '180px', 'margin':'auto'})
                 ], style={'text-align':'center', 'padding-bottom':'15px'}),
 
                 # Detection type
@@ -64,9 +71,9 @@ content = html.Div([
                     dbc.Accordion(
                         dbc.AccordionItem(
                             dbc.ListGroup([
-                                dbc.ListGroupItem("Table Summary", action=True, id='anomaly-table', color='#E8EBEE00'),
-                                dbc.ListGroupItem("Blocks", action=True, id='anomaly-blocks', color='#E8EBEE00'),
-                                dbc.ListGroupItem("Transactions", action=True, id='anomaly-trans', color='#E8EBEE00')
+                                dbc.ListGroupItem("Decision Tree", action=True, id='anomaly-dtc', color='#E8EBEE00'),
+                                dbc.ListGroupItem("K-Nearest Neighbours", action=True, id='anomaly-knn', color='#E8EBEE00'),
+                                dbc.ListGroupItem("XGBoost", action=True, id='anomaly-xgboost', color='#E8EBEE00')
                             ], flush=True, style={'font-size':'14px'}),
                             
                             title="Address Detection"
@@ -112,22 +119,29 @@ content = html.Div([
                     #                     'font-size':15, 'z-index':'1', 'position':'absolute', 'height':'25px', 'width':'30px', 'padding':'0px 1px 3px'}),
                     #dcc.Graph(id="anomaly-graph", style= {'z-index':'-1', 'height': '80vh'}),
                     
-                    dcc.Loading(html.Div(id='outlier-graphs'))
+                    dcc.Loading(
+                        html.Div([
+                            html.P(id="anomaly-description")
+                        ],
+                        id='outlier-graphs'),
+                        color='#0a275c'
+                    )
 
                 ], style= {'margin-top':'30px', 'width':'72vw', 'height':'70vh', 'overflow-y':'scroll'})
 
             ], width = 9, style = {'padding-right':'40px', 'padding-left':'30px', 'padding-top': '20px'})
     
-    ], justify = 'evenly', style={'position':'fixed', 'height': '100vh', 'border-top': '2px solid grey'})
+    ], justify = 'evenly', style={'height': '100vh', 'border-top': '2px solid grey'})
 
-])
+], style = {'padding-bottom':'60px'})
 
 
 def create_anomaly():
     layout = html.Div([
         nav,
         content,
-    ])
+        footer
+    ], style={'min-height':'100%', 'position':'relative', 'overflow-x':'hidden'})
     return layout
 
 
@@ -149,14 +163,14 @@ def update_dropdown(n1, n2, n3):
 # Update graph display title
 @app.callback(
     Output('anomaly-title', "children"),
-    [Input("anomaly-table", "n_clicks"), Input("anomaly-blocks", "n_clicks"), Input("anomaly-trans", "n_clicks"), 
+    [Input("anomaly-dtc", "n_clicks"), Input("anomaly-knn", "n_clicks"), Input("anomaly-xgboost", "n_clicks"), 
     Input("outlier-isoForest", "n_clicks"), Input("outlier-autoEncoder", "n_clicks"), Input("outlier-kmeans", "n_clicks")]
 )
 
 def update_title(n1,n2,n3,n4,n5,n6):
-    titles_dict = {"anomaly-table": "Table of Anomalous Transactions", 
-                   "anomaly-blocks": "Anomalous Blocks Across Time", 
-                   "anomaly-trans": "Anomalous Transactions Across Time",
+    titles_dict = {"anomaly-dtc": "Illicit Transactions Detected using Decision Tree", 
+                   "anomaly-knn": "Illicit Transactions Detected using K-Nearest Neighbours", 
+                   "anomaly-xgboost": "Illicit Transactions Detected using XGBoost",
                    "outlier-isoForest": "Outliers Detected Using Isolation Forest", 
                    "outlier-autoEncoder": "Outliers Detected Using Auto-Encoders", 
                    "outlier-kmeans": "Outliers Detected Using K-Means Clustering"}
@@ -165,13 +179,19 @@ def update_title(n1,n2,n3,n4,n5,n6):
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
     return titles_dict[selected]
 
-# standalone method to reduce repeated chunks in callback below ##
+# Standalone method to reduce repeated chunks in callback below
 def create_fig(df, model):
     graphs = []
-    default = dict(rangeslider=dict(visible=True),type="date")
+    default = dict(rangeslider=dict(visible=True, bgcolor="#d0e0e5"),type="date")
 
     non_features = ['Date', 'index', 'anomaly', 'score']
     features = sorted(set(df.columns) - set(non_features))
+
+    graphs.append(html.P("The following features were used to detect the outliers:"))
+
+    for c in features:
+        graphs.append(html.P(c))
+
     for c in features:
         fig1 = px.line(df, x="Date", y=c, color_discrete_sequence=["#0a275c"])
         outlier = df.loc[df['anomaly'] == 1]
@@ -190,6 +210,15 @@ def create_fig(df, model):
 
 def create_cluster(df, model):
     graphs = []
+
+    non_features = ['Date', 'index', 'anomaly', 'cluster', 'Principal Component 1', 'Principal Component 2']
+    features = sorted(set(df.columns) - set(non_features))
+
+    graphs.append(html.P("The following features were used to detect the outliers:"))
+
+    for c in features:
+        graphs.append(html.P(c))
+
     # Visualising Clusters
     fig = px.scatter(df, x="Principal Component 1", y="Principal Component 2", color="cluster", color_discrete_sequence=px.colors.qualitative.Prism)
     fig.update_xaxes(title_text = "Principal Component 1")
@@ -206,27 +235,61 @@ def create_cluster(df, model):
     
     return graphs
 
+def create_table(df, model):
+    tables = []
+
+    tables.append(html.P("Accounts detected to have illicit transactions:"))
+    tables.append(dbc.Row([
+        dbc.Col([
+            dcc.Dropdown(value=10, clearable=False, style={'width':'35%'}, options=[10, 25, 50, 100], id='row-drop')
+        ], style={'padding-bottom':'15px'}),
+    ]))
+    tables.append(dash_table.DataTable(
+        columns = [
+            {'name': 'Account Address', 'id': 'account', 'type':'string'},
+            {'name': 'Illicit Account', 'id': model, 'type':'numeric'}
+        ],
+        data = df.to_dict('records'),
+        page_size = 10,
+        style_header = {'font-size':'18px'},
+        id = 'anomaly-table'
+    ))
+
+    return tables
+
 @app.callback(
     Output("outlier-graphs", "children"),
-    [Input("outlier-isoForest", "n_clicks"), 
+    [Input("anomaly-dtc", "n_clicks"), 
+    Input("anomaly-knn", "n_clicks"), 
+    Input("anomaly-xgboost", "n_clicks"),
+    Input("outlier-isoForest", "n_clicks"), 
     Input("outlier-autoEncoder", "n_clicks"), 
     Input("outlier-kmeans", "n_clicks")],
+    Input('anomaly-title', 'children'),
     # Input('my-date-picker-range2', 'start_date'),
     # Input('my-date-picker-range2', 'end_date'),
-    Input('anomaly-title', 'children'),
     #Input('range-all-button', 'n_clicks')
 )
 
-def update_line_chart(iso, autoEncoder, kmeans, curr_title):
+def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
-    if ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
+    if ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
         print("1st")             
+        graphs = create_table(df_illicit, 'y_dtc_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
+        print("2nd")
+        graphs = create_table(df_illicit, 'y_knn_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
+        print("3rd")
+        graphs = create_table(df_illicit, 'y_xgb_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
+        print("4th")             
         graphs = create_fig(df_isoForest, 'isoForest')
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-autoEncoder':
-        print("2nd")
+        print("5th")
         graphs = create_fig(df_autoEncoder, 'autoEncoder')
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-kmeans':
-        print("3rd")
+        print("6th")
         graphs = create_cluster(df_kmeans, 'kmeans')
     
     # # update graph based on date range selected by user
@@ -257,3 +320,11 @@ def update_line_chart(iso, autoEncoder, kmeans, curr_title):
     #         graphs = create_cluster(df_kmeans, 'kmeans')           
     
     return graphs
+
+@app.callback(
+    Output("anomaly-table", "page_size"),
+    Input("row-drop", "value"),
+)
+
+def update_row_dropdown(row_v):
+    return row_v

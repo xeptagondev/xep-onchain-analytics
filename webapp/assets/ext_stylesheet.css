@@ -9,28 +9,61 @@
     display: block;
 }
 
-/* create hover tooltip for cryptocurrency dropdown */
-.disabled-info-div .disabled-info {
+.footer-link {
+    color: #1a4855;
+    display: block;
+    text-decoration: None; 
+    font-size: 12px;
+    padding-right: 15px
+}
+
+.footer-link:hover {
+    color: #4693da;
+    text-decoration: underline
+}
+
+.footer-contact {
+    color: #1a4855;
+    display: block;
+    text-decoration: None; 
+    font-size: 12px;
+    padding-right: 15px
+    /* padding-left: 2px */
+}
+
+.footer-contact:hover {
+    color: #4693da;
+    text-decoration: underline
+}
+
+/* create hover tooltip for non-implemented cryptocurrencies*/
+.disabled-coin .disabled-info, .disabled-coin-2 .disabled-info {
     visibility: hidden;
-    background-color: #fff;
-    color: black;
+    background-color: black;
+    color: white;
     text-align: center;
     border-radius: 5px;
     padding: 5px 3px 5px 3px;
-    width: 160px;
+    width: 120px;
+    font-size: 11px;
     /* positioning tooltip at right side */
     position: absolute;
     z-index: 1;
-    top: -5px;
+    top: 50px;
     left: 105%; 
 }
 
-.disabled-info-div:hover .disabled-info {  
+/* positioning tooltip for non-implemented cryptocurrency 2 */
+.disabled-coin-2 .disabled-info {
+    top: 100px; 
+}
+
+.disabled-coin:hover .disabled-info, .disabled-coin-2:hover .disabled-info {  
     visibility: visible;  
 }
 
 /* arrow of cryptocurrency dropdown's tooltip */
-.disabled-info-div .disabled-info::after {
+.disabled-coin .disabled-info::after, .disabled-coin-2 .disabled-info::after {
     content: " ";
     position: absolute;
     top: 50%;
@@ -38,8 +71,9 @@
     margin-top: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: transparent #fff transparent transparent;
+    border-color: transparent black transparent transparent;
 }
+
 
 /* create hover tooltip on top of date range picker */
 .date-picker-div .date-picker-text {  
