@@ -14,24 +14,11 @@
     display: block;
     text-decoration: None; 
     font-size: 12px;
-    padding-right: 15px
+    padding-right: 50px;
+    padding-top: 30px
 }
 
 .footer-link:hover {
-    color: #4693da;
-    text-decoration: underline
-}
-
-.footer-contact {
-    color: #1a4855;
-    display: block;
-    text-decoration: None; 
-    font-size: 12px;
-    padding-right: 15px
-    /* padding-left: 2px */
-}
-
-.footer-contact:hover {
     color: #4693da;
     text-decoration: underline
 }

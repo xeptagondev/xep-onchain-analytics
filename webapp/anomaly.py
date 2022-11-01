@@ -189,8 +189,10 @@ def create_fig(df, model):
 
     graphs.append(html.P("The following features were used to detect the outliers:"))
 
+    f_list = []
     for c in features:
-        graphs.append(html.P(c))
+        f_list.append(c)
+    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None'}) for c in f_list], horizontal=True))
 
     for c in features:
         fig1 = px.line(df, x="Date", y=c, color_discrete_sequence=["#0a275c"])
