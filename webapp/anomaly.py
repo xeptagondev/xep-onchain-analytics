@@ -33,7 +33,7 @@ psqlcursor = psqlconn.cursor()
 df_isoForest = pd.read_sql('SELECT * FROM "isoForest_outliers"', psqlconn)
 df_autoEncoder = pd.read_sql('SELECT * FROM "autoEncoder_outliers"', psqlconn)
 df_kmeans = pd.read_sql('SELECT * FROM "kmeans_outliers"', psqlconn)
-df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
+#df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
@@ -118,12 +118,12 @@ content = html.Div([
                     #             style={'background-color':'#E8EBEE99', 'border-color':'#E8EBEE99', 'color':'#354447', 'margin-left':'240px', 'bottom':'59.7%', 
                     #                     'font-size':15, 'z-index':'1', 'position':'absolute', 'height':'25px', 'width':'30px', 'padding':'0px 1px 3px'}),
                     #dcc.Graph(id="anomaly-graph", style= {'z-index':'-1', 'height': '80vh'}),
-                    
+                    dbc.Card([
+                        dbc.CardHeader("Why Anomaly Detection?"),
+                        dbc.CardBody(id='anomaly-description')
+                    ], style = {'width':'50vw', 'margin':'auto'}),
                     dcc.Loading(
-                        html.Div([
-                            html.P(id="anomaly-description")
-                        ],
-                        id='outlier-graphs'),
+                        html.Div(id='outlier-graphs'),
                         color='#0a275c'
                     )
 
@@ -163,6 +163,7 @@ def update_dropdown(n1, n2, n3):
 # Update graph display title
 @app.callback(
     Output('anomaly-title', "children"),
+    Output('anomaly-description', "children"),
     [Input("anomaly-dtc", "n_clicks"), Input("anomaly-knn", "n_clicks"), Input("anomaly-xgboost", "n_clicks"), 
     Input("outlier-isoForest", "n_clicks"), Input("outlier-autoEncoder", "n_clicks"), Input("outlier-kmeans", "n_clicks")]
 )
@@ -175,9 +176,9 @@ def update_title(n1,n2,n3,n4,n5,n6):
                    "outlier-autoEncoder": "Outliers Detected Using Auto-Encoders", 
                    "outlier-kmeans": "Outliers Detected Using K-Means Clustering"}
     if not ctx.triggered: #default
-        return "Overview"
+        return "Overview", "Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, quick, requires no former relationship between parties, and can facilitate seamless international trades. With the number of cybercriminal activities on the rise, members of the network would want to detect these criminals as soon as possible to prevent them from harming the network’s community and integrity. In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be implementing an anomaly detection framework which aims to reveal the identities of illicit transaction makers as well as spot outliers in the network."
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
-    return titles_dict[selected]
+    return titles_dict[selected], None
 
 # Standalone method to reduce repeated chunks in callback below
 def create_fig(df, model):
@@ -195,10 +196,11 @@ def create_fig(df, model):
     graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None'}) for c in f_list], horizontal=True))
 
     for c in features:
-        fig1 = px.line(df, x="Date", y=c, color_discrete_sequence=["#0a275c"])
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df['Date'], y=df[c], mode='lines', line = dict(color = "#0a275c"), name='normal value'))
         outlier = df.loc[df['anomaly'] == 1]
-        fig2 = px.scatter(outlier, x="Date", y=c, color_discrete_sequence=["firebrick"])
-        fig = go.Figure(data = fig1.data + fig2.data)
+        fig.add_trace(go.Scatter(x=outlier['Date'], y=outlier[c], mode='markers', line = dict(color = "firebrick"), name='outlier'))
+        fig.update_traces(hovertemplate='Date: %{x} <br>Value: %{y}')
         fig.update_xaxes(default) # adding in default range slider
         # setting date range limit to fix range slider bug with scatter plots
         fig.update_xaxes(range=[df['Date'].iloc[0], df['Date'].iloc[-1]],
@@ -249,6 +251,7 @@ def create_table(df, model):
     tables.append(dash_table.DataTable(
         columns = [
             {'name': 'Account Address', 'id': 'account', 'type':'string'},
+            {'name': 'Transaction Hash', 'id': 'hash', 'type':'string'},
             {'name': 'Illicit Account', 'id': model, 'type':'numeric'}
         ],
         data = df.to_dict('records'),
@@ -268,6 +271,7 @@ def create_table(df, model):
     Input("outlier-autoEncoder", "n_clicks"), 
     Input("outlier-kmeans", "n_clicks")],
     Input('anomaly-title', 'children'),
+    prevent_initial_call = True
     # Input('my-date-picker-range2', 'start_date'),
     # Input('my-date-picker-range2', 'end_date'),
     #Input('range-all-button', 'n_clicks')
@@ -275,16 +279,16 @@ def create_table(df, model):
 
 def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
-    if ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
-        print("1st")             
-        graphs = create_table(df_illicit, 'y_dtc_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
-        print("2nd")
-        graphs = create_table(df_illicit, 'y_knn_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
-        print("3rd")
-        graphs = create_table(df_illicit, 'y_xgb_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
+    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
+    #     print("1st")             
+    #     graphs = create_table(df_illicit, 'y_dtc_pred')
+    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
+    #     print("2nd")
+    #     graphs = create_table(df_illicit, 'y_knn_pred')
+    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
+    #     print("3rd")
+        # graphs = create_table(df_illicit, 'y_xgb_pred')
+    if ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
         print("4th")             
         graphs = create_fig(df_isoForest, 'isoForest')
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-autoEncoder':

@@ -7,10 +7,12 @@ from navbar import create_navbar
 from footer import create_footer
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import date, datetime
 import re
 import duckdb as ddb
 import psycopg2
+import json
 
 dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
@@ -95,8 +97,8 @@ content = html.Div([
                             clearable = True,
                             min_date_allowed=date(2009, 1, 3),
                             max_date_allowed=datetime.now(),
-                            start_date_placeholder_text='MM/DD/YY',
-                            end_date_placeholder_text='MM/DD/YY',
+                            start_date_placeholder_text='MM/DD/YYYY',
+                            end_date_placeholder_text='MM/DD/YYYY',
                         ),
                     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
@@ -114,8 +116,13 @@ content = html.Div([
                 # area for metric description
                 html.Div([
                     html.P("Metric Description", style={'font-weight':'bold', 'textDecoration':'underline'}),
-                    html.P(id='metric-desc'),
+                    html.P(id='metric-desc', style={'width':'48vw'}),
                 ]),
+
+                ###
+                html.P(id='graph-data'),
+                ###
+
                 # area to display selected metric's graph
                 dcc.Loading(
                     dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
@@ -211,11 +218,10 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         ),
         type="date"
     )
+    fig = go.Figure()
     if ctx.triggered_id is None or 1 not in n_clicks_list:
-        fig = px.line(basic_metrics, x="Date", y="Price ($)", color_discrete_sequence=["#0a275c"])
-        fig.update_layout(
-          xaxis=default
-        )
+        fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics['Price ($)'],
+                    mode='lines', line = dict(color = "#0a275c")))
         
     elif ctx.triggered_id is not None or 1 in n_clicks_list:
         # print for debugging
@@ -224,29 +230,46 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         # print(id_list[n_clicks_list.index(1)]['index'])
         clicked = id_list[n_clicks_list.index(1)]['index']
         if metrics_desc[metrics_desc['metric_name'] == clicked]['is_computed'].values[0]:
-            fig = px.line(computed_metrics, x="Date", y=clicked, color_discrete_sequence=["#0a275c"])
+            fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[clicked],
+                    mode='lines', line = dict(color = "#0a275c")))
         else:
-            fig = px.line(basic_metrics, x="Date", y=clicked, color_discrete_sequence=["#0a275c"])
-        fig.update_layout(
-            xaxis=default
-        )
+            fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics[clicked],
+                    mode='lines', line = dict(color = "#0a275c")))
+
     # update graph based on date range selected by user
     if start is not None and end is not None:
         if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
             filtered_df = computed_metrics[computed_metrics['Date'].between(start, end)]
-            fig = px.line(filtered_df, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df[curr_metric],
+                    mode='lines', line = dict(color = "#0a275c")))
         else:
             filtered_df = basic_metrics[basic_metrics['Date'].between(start, end)]
-            fig = px.line(filtered_df, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df[curr_metric],
+                    mode='lines', line = dict(color = "#0a275c")))
+        fig.update_xaxes(rangeslider=dict(
+                            visible=True,
+                            bgcolor="#d0e0e5",
+                            thickness=0.1))
+        fig.update_yaxes(title_text = curr_metric)
+
     # return default range when datepicker is empty/cleared
     elif start is None and end is None:
         if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
-            fig = px.line(computed_metrics, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[curr_metric],
+                    mode='lines', line = dict(color = "#0a275c")))
         else:
-            fig = px.line(basic_metrics, x="Date", y=curr_metric, color_discrete_sequence=["#0a275c"])
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics[curr_metric],
+                        mode='lines', line = dict(color = "#0a275c")))
         fig.update_layout(
             xaxis=default
         )
+        fig.update_yaxes(title_text = curr_metric)
+    fig.update_traces(hovertemplate='Date: %{x} <br>Value: %{y}')
+    fig.update_xaxes(title_text = "Date")
     fig.update_layout(plot_bgcolor='white')
     fig.update_xaxes(rangeselector_font_size = 15)
     
@@ -274,3 +297,15 @@ def open_toast(n):
     if n == 0:
         return False
     return True
+
+# propagate current date range of graph displayed
+# @app.callback(
+#     Output('graph-data', "children"),
+#     Output('my-date-picker-range', "start_date"),
+#     Output('my-date-picker-range', "end_date"),
+#     Input('analytics-graph', "figure"),
+# )
+# def propagate_date(figure):
+#     start = figure['data'][0]['x'][0][0:10]
+#     end = figure['data'][0]['x'][-1][0:10]
+#     return "Current date range is : " + start + " to " + end, start, end
