@@ -33,7 +33,8 @@ psqlcursor = psqlconn.cursor()
 df_isoForest = pd.read_sql('SELECT * FROM "isoForest_outliers"', psqlconn)
 df_autoEncoder = pd.read_sql('SELECT * FROM "autoEncoder_outliers"', psqlconn)
 df_kmeans = pd.read_sql('SELECT * FROM "kmeans_outliers"', psqlconn)
-#df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
+df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
+df_illicit_results = pd.read_sql('SELECT * FROM "anomaly_results"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
@@ -118,13 +119,11 @@ content = html.Div([
                     #             style={'background-color':'#E8EBEE99', 'border-color':'#E8EBEE99', 'color':'#354447', 'margin-left':'240px', 'bottom':'59.7%', 
                     #                     'font-size':15, 'z-index':'1', 'position':'absolute', 'height':'25px', 'width':'30px', 'padding':'0px 1px 3px'}),
                     #dcc.Graph(id="anomaly-graph", style= {'z-index':'-1', 'height': '80vh'}),
-                    dbc.Card([
-                        dbc.CardHeader("Why Anomaly Detection?"),
-                        dbc.CardBody(id='anomaly-description')
-                    ], style = {'width':'50vw', 'margin':'auto'}),
-                    dcc.Loading(
-                        html.Div(id='outlier-graphs'),
-                        color='#0a275c'
+                    dcc.Loading([
+                        html.Div(id='anomaly-description'),
+                        html.Div(id='anomaly-graphs')],
+                        color='#0a275c',
+                        style = {'padding-top':'40px'}
                     )
 
                 ], style= {'margin-top':'30px', 'width':'72vw', 'height':'70vh', 'overflow-y':'scroll'})
@@ -176,7 +175,9 @@ def update_title(n1,n2,n3,n4,n5,n6):
                    "outlier-autoEncoder": "Outliers Detected Using Auto-Encoders", 
                    "outlier-kmeans": "Outliers Detected Using K-Means Clustering"}
     if not ctx.triggered: #default
-        return "Overview", "Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, quick, requires no former relationship between parties, and can facilitate seamless international trades. With the number of cybercriminal activities on the rise, members of the network would want to detect these criminals as soon as possible to prevent them from harming the network’s community and integrity. In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be implementing an anomaly detection framework which aims to reveal the identities of illicit transaction makers as well as spot outliers in the network."
+        card = html.P("Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, quick, requires no former relationship between parties, and can facilitate seamless international trades. With the number of cybercriminal activities on the rise, members of the network would want to detect these criminals as soon as possible to prevent them from harming the network’s community and integrity. In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be implementing an anomaly detection framework which aims to reveal the identities of illicit transaction makers as well as spot outliers in the network.")
+        return "Overview", card
+
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
     return titles_dict[selected], None
 
@@ -193,7 +194,7 @@ def create_fig(df, model):
     f_list = []
     for c in features:
         f_list.append(c)
-    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None'}) for c in f_list], horizontal=True))
+    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None', 'border-radius':'0px'}) for c in f_list], horizontal=True))
 
     for c in features:
         fig = go.Figure()
@@ -241,8 +242,23 @@ def create_cluster(df, model):
 
 def create_table(df, model):
     tables = []
+    model_name = model.split("_")[1]
+    
+    tables.append(html.P("Model Performance:"))
+    tables.append(dash_table.DataTable(
+        columns = [
+            {'name': 'Accuracy', 'id': 'test_acc', 'type':'string'},
+            {'name': 'Precision', 'id': 'test_precision', 'type':'string'},
+            {'name': 'Recall', 'id': 'test_recall', 'type':'string'},
+            {'name': 'F1 Score', 'id': 'test_f1score', 'type':'string'}
+        ],
+        data = df_illicit_results.loc[df_illicit_results['class'] == model_name].to_dict('records'),
+        style_header = {'font-size':'17px', 'color': 'black'},
+        style_cell = {'font-family':'Trebuchet MS', 'textAlign': 'left', 'font-size':'14px', 'color': '#0a275c'},
+        id = 'anomaly-performance-table'
+    ))
 
-    tables.append(html.P("Accounts detected to have illicit transactions:"))
+    tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px'}))
     tables.append(dbc.Row([
         dbc.Col([
             dcc.Dropdown(value=10, clearable=False, style={'width':'35%'}, options=[10, 25, 50, 100], id='row-drop')
@@ -252,18 +268,23 @@ def create_table(df, model):
         columns = [
             {'name': 'Account Address', 'id': 'account', 'type':'string'},
             {'name': 'Transaction Hash', 'id': 'hash', 'type':'string'},
+            {'name': 'Transaction Value (BTC)', 'id': 'value', 'type':'numeric'},
+            {'name': 'Transaction Value (USD)', 'id': 'value_usd', 'type':'numeric'},
             {'name': 'Illicit Account', 'id': model, 'type':'numeric'}
         ],
         data = df.to_dict('records'),
         page_size = 10,
-        style_header = {'font-size':'18px'},
+        style_header = {'font-size':'17px', 'color': 'black'},
+        style_cell = {'font-family':'Trebuchet MS', 'textAlign': 'left', 'color': '#0a275c',
+                      'font-size':'14px'},
+        style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 'maxWidth': 0},
         id = 'anomaly-table'
     ))
 
     return tables
 
 @app.callback(
-    Output("outlier-graphs", "children"),
+    Output("anomaly-graphs", "children"),
     [Input("anomaly-dtc", "n_clicks"), 
     Input("anomaly-knn", "n_clicks"), 
     Input("anomaly-xgboost", "n_clicks"),
@@ -279,16 +300,16 @@ def create_table(df, model):
 
 def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
-    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
-    #     print("1st")             
-    #     graphs = create_table(df_illicit, 'y_dtc_pred')
-    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
-    #     print("2nd")
-    #     graphs = create_table(df_illicit, 'y_knn_pred')
-    # elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
-    #     print("3rd")
-        # graphs = create_table(df_illicit, 'y_xgb_pred')
-    if ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
+    if ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
+        print("1st")             
+        graphs = create_table(df_illicit, 'y_dtc_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
+        print("2nd")
+        graphs = create_table(df_illicit, 'y_knn_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
+        print("3rd")
+        graphs = create_table(df_illicit, 'y_xgb_pred')
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
         print("4th")             
         graphs = create_fig(df_isoForest, 'isoForest')
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-autoEncoder':

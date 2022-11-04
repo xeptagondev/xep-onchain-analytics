@@ -144,7 +144,6 @@ def create_charts():
     ], style={'min-height':'100%', 'position':'relative', 'overflow-x':'hidden'})
     return layout
 
-
 ################## Callbacks ##############################
 
 # Update dropdown label 
@@ -179,6 +178,21 @@ def update_metrics(searchterm):
             else:
                 count+=1
     return [dbc.ListGroupItem(i, action=True, id={"type": "list-group-item", "index": i}, color = '#E8EBEE00', style = {'font-size': '13px'}) for i in result]
+
+# Method to plot basic metrics
+def plot_basic_metrics(fig, df, metric):
+    if (metric != "Difficulty"):
+        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], mode='lines', line = dict(color = "#0a275c")))
+    else:
+        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], mode='lines', line = dict(color = "#0a275c"), name = "Market"))
+
+        rolling_window = [14, 25, 40, 60, 90, 128, 200]
+        for i in rolling_window:
+            rolling_mean = df[metric].rolling(window=i).mean()
+            trace = go.Scatter(x = df['Date'], y=rolling_mean, mode='lines', line = dict(color = "rgba(255, 0, 0, 0.5)"), name = "D{}".format(i))
+            fig.add_trace(trace)
+
+    return fig
 
 # Update line graph data
 @app.callback(
@@ -233,8 +247,7 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
             fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[clicked],
                     mode='lines', line = dict(color = "#0a275c")))
         else:
-            fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics[clicked],
-                    mode='lines', line = dict(color = "#0a275c")))
+            plot_basic_metrics(fig, basic_metrics, clicked)
 
     # update graph based on date range selected by user
     if start is not None and end is not None:
@@ -246,8 +259,7 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         else:
             filtered_df = basic_metrics[basic_metrics['Date'].between(start, end)]
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df[curr_metric],
-                    mode='lines', line = dict(color = "#0a275c")))
+            plot_basic_metrics(fig, filtered_df, curr_metric)
         fig.update_xaxes(rangeslider=dict(
                             visible=True,
                             bgcolor="#d0e0e5",
@@ -262,8 +274,7 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
                     mode='lines', line = dict(color = "#0a275c")))
         else:
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics[curr_metric],
-                        mode='lines', line = dict(color = "#0a275c")))
+            plot_basic_metrics(fig, basic_metrics, curr_metric)
         fig.update_layout(
             xaxis=default
         )
