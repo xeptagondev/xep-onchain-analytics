@@ -174,14 +174,14 @@ def update_metrics(searchterm):
 
 # Method to plot basic metrics
 def plot_basic_metrics(fig, df, metric):
-    if (metric != "Difficulty"):
+    if (metric != "Difficulty Ribbon"):
         fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], mode='lines', line = dict(color = "#0a275c")))
     else:
-        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], mode='lines', line = dict(color = "#0a275c"), name = "Market"))
+        fig.add_trace(go.Scatter(x=df['Date'], y=df["Difficulty"], mode='lines', line = dict(color = "#0a275c"), name = "Market"))
 
         rolling_window = [14, 25, 40, 60, 90, 128, 200]
         for i in rolling_window:
-            rolling_mean = df[metric].rolling(window=i).mean()
+            rolling_mean = df["Difficulty"].rolling(window=i).mean()
             trace = go.Scatter(x = df['Date'], y=rolling_mean, mode='lines', line = dict(color = "rgba(255, 0, 0, 0.5)"), name = "D{}".format(i))
             fig.add_trace(trace)
 
