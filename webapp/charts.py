@@ -34,7 +34,6 @@ computed_metrics = pd.read_sql("SELECT * FROM computed_metrics", psqlconn)
 # Metrics and their descriptions
 metrics_desc = pd.read_csv("assets/metrics_desc.csv")
 
-
 content = html.Div([
     dbc.Row([
             # Control panel column
@@ -107,7 +106,7 @@ content = html.Div([
                             header="How is it Calculated?",
                             dismissable=True,
                             is_open=False,
-                            style = {'width':'30vw'}
+                            style = {'width':'40vw'}
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
                 # area for metric description
