@@ -1,6 +1,6 @@
 import dash
 from dash import html, dcc, ALL, ctx, dash_table
-from dash.dependencies import Input, Output, ALL
+from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 from app import app
 from navbar import create_navbar
@@ -37,6 +37,14 @@ df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
 df_illicit_results = pd.read_sql('SELECT * FROM "anomaly_results"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
+
+df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 
+                   'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 
+                   'spending_value_usd': 'Spending Value (USD)', 'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 
+                   'is_coinbase': 'Is Coinbase', 'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 
+                   'input_total_usd': 'Total Input (USD)', 'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
+                   'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'}
+
 
 content = html.Div([
     dbc.Row([
@@ -102,28 +110,14 @@ content = html.Div([
             dbc.Col([
                 html.Div([
                     html.H4(id="anomaly-title", style = {'display':'inline-block', 'vertical-align':'center'}),
-                    # html.Div([
-                    #         html.Span("Select your preferred date range.", className='date-picker-text', style = {'font-size':'12px'}),
-                    #             dcc.DatePickerRange(
-                    #             id='my-date-picker-range2',
-                    #             clearable = True,
-                    #             min_date_allowed=date(2009, 1, 3),
-                    #             max_date_allowed=datetime.now(),
-                    #             start_date_placeholder_text='MM/DD/YY',
-                    #             end_date_placeholder_text='MM/DD/YY',
-                    #         ),
-                    #     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                     ]),
+                  
                 html.Div([
-                    # dbc.Button('ALL', id="range-all-button", 
-                    #             style={'background-color':'#E8EBEE99', 'border-color':'#E8EBEE99', 'color':'#354447', 'margin-left':'240px', 'bottom':'59.7%', 
-                    #                     'font-size':15, 'z-index':'1', 'position':'absolute', 'height':'25px', 'width':'30px', 'padding':'0px 1px 3px'}),
-                    #dcc.Graph(id="anomaly-graph", style= {'z-index':'-1', 'height': '80vh'}),
                     dcc.Loading([
                         html.Div(id='anomaly-description'),
                         html.Div(id='anomaly-graphs')],
                         color='#0a275c',
-                        style = {'padding-top':'40px'}
+                        style = {'position':'fixed', 'top': '50%'}
                     )
 
                 ], style= {'margin-top':'30px', 'width':'72vw', 'height':'70vh', 'overflow-y':'scroll'})
@@ -171,11 +165,43 @@ def update_title(n1,n2,n3,n4,n5,n6):
     titles_dict = {"anomaly-dtc": "Illicit Transactions Detected using Decision Tree", 
                    "anomaly-knn": "Illicit Transactions Detected using K-Nearest Neighbours", 
                    "anomaly-xgboost": "Illicit Transactions Detected using XGBoost",
-                   "outlier-isoForest": "Outliers Detected Using Isolation Forest", 
-                   "outlier-autoEncoder": "Outliers Detected Using Auto-Encoders", 
-                   "outlier-kmeans": "Outliers Detected Using K-Means Clustering"}
-    if not ctx.triggered: #default
-        card = html.P("Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, quick, requires no former relationship between parties, and can facilitate seamless international trades. With the number of cybercriminal activities on the rise, members of the network would want to detect these criminals as soon as possible to prevent them from harming the network’s community and integrity. In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be implementing an anomaly detection framework which aims to reveal the identities of illicit transaction makers as well as spot outliers in the network.")
+                   "outlier-isoForest": "Outliers Detected using Isolation Forest", 
+                   "outlier-autoEncoder": "Outliers Detected using Auto-Encoders", 
+                   "outlier-kmeans": "Outliers Detected using K-Means Clustering"}
+    if not ctx.triggered: # Default
+        ov = """
+            Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option 
+            for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, 
+            quick, requires no former relationship between parties, and can facilitate seamless international trades. 
+            With the number of cybercriminal activities on the rise, members of the network would want to detect 
+            these criminals as soon as possible to prevent them from harming the network’s community and integrity. 
+            In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be 
+            implementing an anomaly detection framework which aims to reveal the identities of illicit transaction 
+            makers as well as spot outliers in the network.
+        """
+    
+        address = """
+            The dataset is an input graph collected from Blockahir's bitcoin blockchain. A row in the dataset 
+            represents an input along with its transactions data which is joined by its transaction hash. 
+            Each node has 27 features used along with its hash which contains the transactions hash and its account 
+            which contains the address of the recipient. Each input is marked as illicit if the recipient has 
+            been reported to have used its account for illicit activites such as sextortion, blackmail, darknet market, 
+            ransomeware etc. Illicit address are collected from bitcoinabuse.com which has the cryptocurrency community 
+            reporting addresses where they have encountered activity from hackers and criminals to make the internet a safer place. 
+            Additional address are also collected from the BABD-13 dataset used in the Basic models are created and trained for 
+            demonstration purposes on 2022-07-01 data, parameters are available in our GitHub source code."""
+
+        outlier = """
+            An Outlier is a rare chance of occurrence within a given data set and is an observation point that is distant from 
+            other observations. Outliers act as signals that an anomalous transaction or activity might be taking place in the Blockchain network. 
+            In this scenario, we used a combination of metrices such as Transaction Volume, Transaction Count etc as features for our 
+            outlier detection models.
+        """
+
+        card = []
+        card.append(html.Div([html.P("Background of Anomaly Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov)]))
+        card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address)]))
+        card.append(html.Div([html.P("Outlier Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(outlier)]))
         return "Overview", card
 
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -194,7 +220,8 @@ def create_fig(df, model):
     f_list = []
     for c in features:
         f_list.append(c)
-    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None', 'border-radius':'0px'}) for c in f_list], horizontal=True))
+    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None', 'border-radius':'0px'}) for c in f_list], 
+                  horizontal=True, style = {'padding-bottom': '10px'}))
 
     for c in features:
         fig = go.Figure()
@@ -221,8 +248,8 @@ def create_cluster(df, model):
 
     graphs.append(html.P("The following features were used to detect the outliers:"))
 
-    for c in features:
-        graphs.append(html.P(c))
+    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None', 'border-radius':'0px'}) for c in features], 
+                  horizontal=True, style = {'padding-bottom': '10px'}))
 
     # Visualising Clusters
     fig = px.scatter(df, x="Principal Component 1", y="Principal Component 2", color="cluster", color_discrete_sequence=px.colors.qualitative.Prism)
@@ -243,8 +270,15 @@ def create_cluster(df, model):
 def create_table(df, model):
     tables = []
     model_name = model.split("_")[1]
+
+    df_illicit_cols = {model: 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 
+                       'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 'spending_value_usd': 'Spending Value (USD)', 
+                       'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 'is_coinbase': 'Is Coinbase', 
+                       'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 'input_total_usd': 'Total Input (USD)', 
+                       'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
+                       'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'}
     
-    tables.append(html.P("Model Performance:"))
+    tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
     tables.append(dash_table.DataTable(
         columns = [
             {'name': 'Accuracy', 'id': 'test_acc', 'type':'string'},
@@ -253,31 +287,43 @@ def create_table(df, model):
             {'name': 'F1 Score', 'id': 'test_f1score', 'type':'string'}
         ],
         data = df_illicit_results.loc[df_illicit_results['class'] == model_name].to_dict('records'),
-        style_header = {'font-size':'17px', 'color': 'black'},
-        style_cell = {'font-family':'Trebuchet MS', 'textAlign': 'left', 'font-size':'14px', 'color': '#0a275c'},
+        style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
+        style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'left', 
+                      'color': '#0a275c', 'padding': '5px 10px 5px 10px'},
         id = 'anomaly-performance-table'
     ))
 
-    tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px'}))
+    tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px', 'font-weight':'bold'}))
     tables.append(dbc.Row([
         dbc.Col([
-            dcc.Dropdown(value=10, clearable=False, style={'width':'35%'}, options=[10, 25, 50, 100], id='row-drop')
-        ], style={'padding-bottom':'15px'}),
-    ]))
+            dcc.Dropdown(value=10, clearable=False, options=[10, 25, 50, 100], id='row-drop')
+        ], width = 2, style={'padding-bottom':'15px'}),
+        dbc.Col([
+            html.Div(
+                dcc.Dropdown(options=[{'label': y, 'value': x} for x, y in df_illicit_cols.items()],
+                             value=[model, 'account', 'hash', 'value', 'value_usd'],
+                             multi = True,
+                             placeholder = "Select table fields...",
+                             id = 'table-fields')
+            )
+        ], width = 6, style={'padding-bottom':'15px'})
+    ], justify = 'start'))
+    
     tables.append(dash_table.DataTable(
-        columns = [
-            {'name': 'Account Address', 'id': 'account', 'type':'string'},
-            {'name': 'Transaction Hash', 'id': 'hash', 'type':'string'},
-            {'name': 'Transaction Value (BTC)', 'id': 'value', 'type':'numeric'},
-            {'name': 'Transaction Value (USD)', 'id': 'value_usd', 'type':'numeric'},
-            {'name': 'Illicit Account', 'id': model, 'type':'numeric'}
-        ],
+        columns = [],
         data = df.to_dict('records'),
+        style_as_list_view = True,
         page_size = 10,
-        style_header = {'font-size':'17px', 'color': 'black'},
-        style_cell = {'font-family':'Trebuchet MS', 'textAlign': 'left', 'color': '#0a275c',
-                      'font-size':'14px'},
-        style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 'maxWidth': 0},
+        style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
+        style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'center',
+                      'color': '#0a275c', 'padding': '12px 15px 12px 15px'},
+        style_table = {'overflowX': 'auto'},
+        style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 
+                      'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'},
+        style_data_conditional=[{
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(220, 220, 220, 0.5)',
+        }],
         id = 'anomaly-table'
     ))
 
@@ -293,61 +339,31 @@ def create_table(df, model):
     Input("outlier-kmeans", "n_clicks")],
     Input('anomaly-title', 'children'),
     prevent_initial_call = True
-    # Input('my-date-picker-range2', 'start_date'),
-    # Input('my-date-picker-range2', 'end_date'),
-    #Input('range-all-button', 'n_clicks')
 )
 
 def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
     if ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
-        print("1st")             
         graphs = create_table(df_illicit, 'y_dtc_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
-        print("2nd")
-        graphs = create_table(df_illicit, 'y_knn_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
-        print("3rd")
-        graphs = create_table(df_illicit, 'y_xgb_pred')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
-        print("4th")             
-        graphs = create_fig(df_isoForest, 'isoForest')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-autoEncoder':
-        print("5th")
-        graphs = create_fig(df_autoEncoder, 'autoEncoder')
-    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-kmeans':
-        print("6th")
-        graphs = create_cluster(df_kmeans, 'kmeans')
     
-    # # update graph based on date range selected by user
-    # if start is not None and end is not None:
-    #     if 'isolation forest' in curr_title.lower():
-    #         print("4th")
-    #         filtered_df = df_isoForest[df_isoForest['Date'].between(parse(start).date(), parse(end).date())]
-    #         graphs = create_fig(filtered_df, 'isoForest')
-    #     elif 'auto-encoder' in curr_title.lower():
-    #         print("5th")
-    #         filtered_df = df_autoEncoder[df_autoEncoder['Date'].between(parse(start).date(), parse(end).date())]
-    #         graphs = create_fig(filtered_df, 'autoEncoder')
-    #     elif 'k-means' in curr_title.lower():
-    #         print("6th")
-    #         filtered_df = df_kmeans[df_kmeans['Date'].between(parse(start).date(), parse(end).date())]
-    #         graphs = create_cluster(filtered_df, 'kmeans')
-
-    # # return default range when datepicker is empty/cleared
-    # elif start is None and end is None:
-    #     if 'isolation forest' in curr_title.lower():
-    #         print("7th")
-    #         graphs = create_fig(df_isoForest, 'isoForest')
-    #     elif 'auto-encoder' in curr_title.lower():
-    #         print("8th")
-    #         graphs = create_fig(df_autoEncoder, 'autoEncoder')  
-    #     elif 'k-means' in curr_title.lower():
-    #         print("9th")
-    #         graphs = create_cluster(df_kmeans, 'kmeans')           
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
+        graphs = create_table(df_illicit, 'y_knn_pred')
+    
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
+        graphs = create_table(df_illicit, 'y_xgb_pred')
+    
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
+        graphs = create_fig(df_isoForest, 'isoForest')
+    
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-autoEncoder':
+        graphs = create_fig(df_autoEncoder, 'autoEncoder')
+    
+    elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-kmeans':
+        graphs = create_cluster(df_kmeans, 'kmeans')          
     
     return graphs
 
+# Updating page size of address detection's table 
 @app.callback(
     Output("anomaly-table", "page_size"),
     Input("row-drop", "value"),
@@ -355,3 +371,34 @@ def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
 
 def update_row_dropdown(row_v):
     return row_v
+
+# Updating columns shown in table based on dropdown 
+@app.callback(
+    Output('anomaly-table', 'columns'),
+    [Input('table-fields', 'value')],
+    Input('anomaly-title', 'children'),
+    [State('anomaly-table', 'columns')]
+)
+
+def update_cols_displayed(value, model, columns):
+    columns = []
+    try:
+        if model.split("using ")[1] == 'Decision Tree':
+            model = 'y_dtc_pred'
+    
+        elif model.split("using ")[1] == 'K-Nearest Neighbours':
+            model = 'y_knn_pred'
+    
+        elif model.split("using ")[1] == 'XGBoost':
+            model = 'y_xgb_pred'
+    
+        if not value:
+            value=[model, 'account', 'hash', 'value', 'value_usd']
+        for feature in value:
+            columns.append({
+                'name': df_illicit_cols[feature],
+                'id': feature
+            })
+        return columns
+    except:
+        print("This is not address detection!")

@@ -22,4 +22,4 @@ index,metric_name,description,is_computed,formula
 21,Balanced Price,"Difference between Realized price and Transferred price. Transfer Price is the cumulative sum of Coin Days Destroyed in USD, adjusted by circulating supply and total time since Bitcoin's establishment. Balanced Price attempts to detect major cycle bottoms.",True,$Balanced$ $Price$ = $Realised$ $Price$ - $Transferred$ $Price$
 22,Average Coin Dormancy,The average number of days each spent coin had been dormant for before it was moved,True,$Avg$ $Coin$ $Dormancy$ = $CDD \over Transaction Volume(BTC)$
 23,Average Transaction Value (ATV),The fraction of total transaction value over the total number of transactions for each day,False,$Avg Transaction Value$ = $Transaction Volume (BTC) \over Transaction Count$
-24,Difficulty,Uses moving averages (MA) of Bitcoin mining difficulty i.e. difficulty in mining a block,False,-
+24,Difficulty Ribbon,Uses moving averages (MA) of Bitcoin mining difficulty i.e. difficulty in mining a block,False,-

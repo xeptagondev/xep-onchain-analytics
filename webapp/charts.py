@@ -18,10 +18,7 @@ dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
 footer = create_footer()
 
-# Connecting to database
-# ddbconn = ddb.connect("/home/ec2-user/bitcoin-basic-metrics/bitcoin.duckdb", read_only=True)
-# ddbc = ddbconn.cursor()
-
+# Connecting to PostgreSQL database
 psqlconn = psycopg2.connect(database="bitcoin",
                             host="44.206.88.106",
                             user="ec2-user",
@@ -119,10 +116,6 @@ content = html.Div([
                     html.P(id='metric-desc', style={'width':'48vw'}),
                 ]),
 
-                ###
-                html.P(id='graph-data'),
-                ###
-
                 # area to display selected metric's graph
                 dcc.Loading(
                     dcc.Graph(id="analytics-graph", style={'height': '80vh'}),
@@ -168,7 +161,7 @@ def update_dropdown(n1, n2, n3):
 def update_metrics(searchterm):
     if searchterm == "": # when search bar is cleared
         return [dbc.ListGroupItem(x, action=True, id={"type": "list-group-item", "index": x}, color = '#E8EBEE00', style = {'font-size': '13px'}) for x in sorted(metrics_desc['metric_name'].tolist())]
-    # when there is non-empty input to search bar
+    # When there is non-empty input to search bar
     result = metrics_desc['metric_name'].tolist().copy()
     for word in searchterm.split(" "):
         count=0
@@ -238,10 +231,6 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
                     mode='lines', line = dict(color = "#0a275c")))
         
     elif ctx.triggered_id is not None or 1 in n_clicks_list:
-        # print for debugging
-        # print(clicked_id)
-        # print(n_clicks_list.index(1))
-        # print(id_list[n_clicks_list.index(1)]['index'])
         clicked = id_list[n_clicks_list.index(1)]['index']
         if metrics_desc[metrics_desc['metric_name'] == clicked]['is_computed'].values[0]:
             fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[clicked],
@@ -249,7 +238,7 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         else:
             plot_basic_metrics(fig, basic_metrics, clicked)
 
-    # update graph based on date range selected by user
+    # Update graph based on date range selected by user
     if start is not None and end is not None:
         if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
             filtered_df = computed_metrics[computed_metrics['Date'].between(start, end)]
@@ -266,7 +255,7 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
                             thickness=0.1))
         fig.update_yaxes(title_text = curr_metric)
 
-    # return default range when datepicker is empty/cleared
+    # Return default range when datepicker is empty/cleared
     elif start is None and end is None:
         if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
             fig = go.Figure()
@@ -308,15 +297,3 @@ def open_toast(n):
     if n == 0:
         return False
     return True
-
-# propagate current date range of graph displayed
-# @app.callback(
-#     Output('graph-data', "children"),
-#     Output('my-date-picker-range', "start_date"),
-#     Output('my-date-picker-range', "end_date"),
-#     Input('analytics-graph', "figure"),
-# )
-# def propagate_date(figure):
-#     start = figure['data'][0]['x'][0][0:10]
-#     end = figure['data'][0]['x'][-1][0:10]
-#     return "Current date range is : " + start + " to " + end, start, end
