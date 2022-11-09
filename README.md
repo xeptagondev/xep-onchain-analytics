@@ -1,4 +1,6 @@
+
 # Xeptagon Blockchain Analytics
+An opensource framework for on-chain analytics.
 
 ## How to run this app
 
@@ -42,3 +44,4 @@ To delete app from AWS Cloud:
 ```
 eb terminate
 ```
+
