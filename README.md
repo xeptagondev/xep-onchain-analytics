@@ -46,7 +46,7 @@ eb terminate
 ```
 ## To initialize database
 
-Create a config.json file (replace the credentials keys, password and file path with your own):
+Create a `config.json` file (replace the credentials keys, password and file path with your own):
 ```
 {
     "ddb": {
@@ -72,7 +72,7 @@ Create a config.json file (replace the credentials keys, password and file path 
 
 ```
 
-Download the *BABD-13.csv* dataset from the link below and store it within the `bitcoin_abuse` folder.
+Download the *BABD-13.csv* dataset from the link below and store it within a folder named `bitcoin_abuse` under `anomaly_detection`.
 
 ```
 https://www.kaggle.com/datasets/lemonx/babd13
@@ -80,7 +80,7 @@ https://www.kaggle.com/datasets/lemonx/babd13
 
 Change *start_date* and *end_date* parameters in `extract/main.py`
 
-Run main.py:
+Run main.py using the following command:
 
 ```
 python3 extract/main.py
