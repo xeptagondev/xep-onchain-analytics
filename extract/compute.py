@@ -31,7 +31,7 @@ def compute(start_date, end_date, conn):
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
         day = datetime.combine(day, datetime.min.time())
-        filename = "'/home/ec2-user/etl/data/inputs/blockchair_bitcoin_inputs_" + day.strftime('%Y%m%d') + ".parquet'"
+        filename = "'xep-onchain-analytics/data/inputs/blockchair_bitcoin_inputs_" + day.strftime('%Y%m%d') + ".parquet'"
         calculate_sopr = "SELECT sum(spending_value_usd) / sum(value_usd) FROM " + filename
         sopr_value = conn.execute(calculate_sopr).fetchone()
         conn.execute('INSERT INTO sopr VALUES (?, ?)', [day, sopr_value[0]])

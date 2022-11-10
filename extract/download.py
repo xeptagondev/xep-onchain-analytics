@@ -7,8 +7,8 @@ def download():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_experimental_option("prefs", {"download.default_directory":r"/home/ec2-user/etl/data/basic_metrics"})
+    chrome_options.add_argument('--disable-dev-shm-usage') 
+    chrome_options.add_experimental_option("prefs", {"download.default_directory":r"/xep-onchain-analytics/data/basic_metrics"})
     driver = webdriver.Chrome('chromedriver', options=chrome_options)
 
     # Download price

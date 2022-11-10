@@ -44,4 +44,45 @@ To delete app from AWS Cloud:
 ```
 eb terminate
 ```
+## To initialize database
 
+Create a config.json file (replace the credentials keys, password and file path with your own):
+```
+{
+    "ddb": {
+        "database": "/filepath"
+    },
+    "postgre": {
+        "engine": "postgresql://user:password@host:port/bitcoin",
+        "database": "bitcoin",
+        "host": "host",
+        "user": "user",
+        "password": "password",
+        "port": "port"
+    },
+    "APIkey": {
+        "blockdata": "APIKEY",
+        "blockchair": "APIKEY",
+        "bitcoinabuse": "APIKEY"
+    },
+    "init": {
+        "bitcoinabuse": 2
+    }
+}
+
+```
+
+Change *start_date* and *end_date* parameters in `extract/main.py`
+
+Run main.py:
+
+```
+python3 extract/main.py
+```
+
+Run `init_bitcoin_abuse_to_postgresql.py` and `load_BABD_to_postgresql.py`:
+
+```
+python3 anomaly_detection/init_bitcoin_abuse_to_postgresql.py
+python3 anomaly_detection/load_BABD_to_postgresql.py
+```

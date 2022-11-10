@@ -3,11 +3,14 @@ import pandas as pd
 import requests
 import json
 import io
+import os
 
 # Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql
 
+os.chdir("xep-onchain-analytics")
+
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
 
 # Connecting to Database
@@ -26,13 +29,14 @@ def writeToJSONFile(path, fileName, data):
         json.dump(data, fp)
 
 from datetime import date
-abuse_today = requests.get("https://www.bitcoinabuse.com/api/download/1d?", params={'api_token': "vSRr9j7VkNyrQrZqOs3drvBqUAh3pnqqoOjNMZai"})
+abuse_today = requests.get("https://www.bitcoinabuse.com/api/download/1d?", params={'api_token': config['APIkey']['bitcoinabuse']})
 if (abuse_today.ok):
     data = abuse_today.content.decode('utf8')
     df = pd.read_csv(io.StringIO(data))
 
+    # Loads the days data as a csv file to be stored, can be excluded
     today = date.today().strftime("%b-%d-%Y")
-    path = 'bitcoin_anomaly/bitcoin_abuse/bitcoin_abuse_daily/' + today + '.csv'
+    path = './anomaly_detection/bitcoin_abuse/bitcoin_abuse_daily/' + today + '.csv'
     df.to_csv(path)
 
 sql = """INSERT INTO illicit_label (account, label)

@@ -6,8 +6,6 @@ from get_realised_cap import get_realised_cap
 from compute import compute
 from init_ddb import init_ddb
 from load_to_pg import load_to_pg
-
-
 import os
 from datetime import date, timedelta
 import duckdb as ddb
@@ -15,11 +13,12 @@ from sqlalchemy import create_engine
 import psycopg2
 import json
 
+os.chdir("xep-onchain-analytics/data")
+
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
 
-os.chdir("./etl/data")
 conn = ddb.connect(config['ddb']['database'])
 
 engine = create_engine(config['postgre']['engine'])
@@ -35,13 +34,13 @@ end_date = date.today() - timedelta(days = 14) # for instantiating purposes, can
 
 # init_ddb(start_date, end_date, conn) # uncomment this to instantiate the anomaly detection testing database
 
-# scrape(start_date, end_date, config)
+scrape(start_date, end_date, config)
 download() 
-# convert()
-# load_basic_metrics(conn)
-# get_realised_cap(start_date, end_date, conn, config)
-# compute(start_date, end_date, conn)
-# load_to_pg(engine, conn, start_date, end_date)
+convert()
+load_basic_metrics(conn)
+get_realised_cap(start_date, end_date, conn, config)
+compute(start_date, end_date, conn)
+load_to_pg(engine, conn, start_date, end_date)
 
 conn.close()
 psqlconn.close()
