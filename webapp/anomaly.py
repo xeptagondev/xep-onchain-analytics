@@ -13,19 +13,22 @@ from dateutil.parser import parse
 
 import psycopg2
 from sqlalchemy import create_engine
+import json
 
 dash.register_page(__name__, path='/anomaly', name="Anomaly Detection")
 nav = create_navbar()
 footer = create_footer()
 
-# Connecting to PostgreSQL Database
-engine = create_engine('postgresql://ec2-user:password@localhost:5432/bitcoin')
+# Database configurations
+with open("/home/ec2-user/etl/extract/config.json") as config_file:
+    config = json.load(config_file)
 
-psqlconn = psycopg2.connect(database="bitcoin",
-                            host="44.206.88.106",
-                            user="ec2-user",
-                            password="password",
-                            port="5432")
+# Connecting to PostgreSQL database
+psqlconn = psycopg2.connect(database = config['postgre']['database'],
+                            host = config['postgre']['host'],
+                            user = config['postgre']['user'],
+                            password = config['postgre']['password'],
+                            port = config['postgre']['port'])
 
 psqlcursor = psqlconn.cursor()
 
