@@ -18,12 +18,18 @@ dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
 footer = create_footer()
 
+# Database configurations
+with open("/home/ec2-user/etl/extract/config.json") as config_file:
+    config = json.load(config_file)
+
 # Connecting to PostgreSQL database
-psqlconn = psycopg2.connect(database="bitcoin",
-                            host="44.206.88.106",
-                            user="ec2-user",
-                            password="password",
-                            port="5432")
+psqlconn = psycopg2.connect(database = config['postgre']['database'],
+                            host = config['postgre']['host'],
+                            user = config['postgre']['user'],
+                            password = config['postgre']['password'],
+                            port = config['postgre']['port'])
+
+
 
 psqlcursor = psqlconn.cursor()
 
