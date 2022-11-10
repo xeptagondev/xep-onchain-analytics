@@ -72,6 +72,12 @@ Create a config.json file (replace the credentials keys, password and file path 
 
 ```
 
+Download the *BABD-13.csv* dataset from the link below and store it within the `bitcoin_abuse` folder.
+
+```
+https://www.kaggle.com/datasets/lemonx/babd13
+```
+
 Change *start_date* and *end_date* parameters in `extract/main.py`
 
 Run main.py:
