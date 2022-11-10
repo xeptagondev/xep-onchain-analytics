@@ -9,14 +9,17 @@ from sklearn.neighbors import KNeighborsClassifier
 import pickle
 import codecs
 import json
+import os
 
-# Retrieve dataset from duck db
-conn = ddb.connect(database = '/home/ec2-user/test/data/test.duckdb')
-df = conn.execute("SELECT * from anomaly_df").fetchdf()
+os.chdir("xep-onchain-analytics")
 
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
+
+# Retrieve dataset from duck db
+conn = ddb.connect(config['ddb']['database'])
+df = conn.execute("SELECT * from anomaly_df").fetchdf()
 
 # Connect to Database
 engine = create_engine(config['postgre']['engine'])
@@ -70,4 +73,4 @@ with engine.connect() as conn:
 
 cursor.close()
 conn.close()
-conn_post.close()
+psqlconn.close()

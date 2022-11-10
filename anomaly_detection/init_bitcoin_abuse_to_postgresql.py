@@ -2,11 +2,14 @@ import psycopg2
 import pandas as pd
 import requests
 import json
+import os
 
 # Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql, file to only be ran once for initializaion
 
+os.chdir("xep-onchain-analytics")
+
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
 
 conn = psycopg2.connect(database = config['postgre']['database'],
@@ -23,20 +26,22 @@ def writeToJSONFile(path, fileName, data):
     with open(filePathNameWExt, 'w') as fp:
         json.dump(data, fp)
 
-path = 'bitcoin_anomaly/bitcoin_abuse'
+# Set limit in number of pages to fetch from bitcoin abuse website and storing it into postgresql for initialization
+path = 'anomaly_detection/bitcoin_abuse'
+page_end = config['init']['bitcoinabuse']
 
 import time
-for page in range(0, 600):
+for page in range(0, page_end):
     print(page)
-    abuse_counts = requests.get("https://www.bitcoinabuse.com/api/reports/distinct", params={'api_token': "vSRr9j7VkNyrQrZqOs3drvBqUAh3pnqqoOjNMZai", 'page' : page}).text
+    abuse_counts = requests.get("https://www.bitcoinabuse.com/api/reports/distinct", params={'api_token': config['APIkey']['bitcoinabuse'], 'page' : page}).text
     jsondata = json.loads(abuse_counts)
     fileName = "bitcoin_abuse_" + str(page)
     writeToJSONFile(path, fileName, jsondata)
     time.sleep(3)
 
-for page in range(0, 600):
+for page in range(0, page_end):
     print(page)
-    f = open("./bitcoin_anomaly/bitcoin_abuse/bitcoin_abuse_" + str(page) + ".json")
+    f = open("./anomaly_detection/bitcoin_abuse/bitcoin_abuse_" + str(page) + ".json")
     address_data = json.load(f)
     columns = ""
     
@@ -77,3 +82,5 @@ select_sql = "SELECT account FROM ILLICIT_LABEL WHERE LABEL = 1"
 df_abuse = pd.read_sql(select_sql, conn)
 dups = df_abuse.groupby(df_abuse.columns.tolist(),as_index=False).size()
 print(dups[dups['size'] > 1])
+
+conn.close()

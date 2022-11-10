@@ -29,8 +29,10 @@ from pyod.models.auto_encoder import AutoEncoder
 import psycopg2
 from sqlalchemy import create_engine
 
+os.chdir("xep-onchain-analytics")
+
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
 
 engine = create_engine(config['postgre']['engine'])
@@ -223,7 +225,7 @@ plt.xticks(num_clusters)
 plt.xlabel('Number of Clusters')
 plt.ylabel('Score')
 plt.title('Elbow Curve')
-plt.show();
+plt.show()
 
 # Finding point of inflection
 kl = KneeLocator(range(1, 20), scores, curve="concave", direction="increasing")

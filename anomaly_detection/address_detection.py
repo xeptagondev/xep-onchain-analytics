@@ -11,14 +11,17 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import pickle
 import codecs
 import json
+import os 
 
-# Retrieve dataset from duck db
-conn = ddb.connect(database = '/home/ec2-user/test/data/test.duckdb')
-df = conn.execute("SELECT * from anomaly_df").fetchdf()
+os.chdir("xep-onchain-analytics")
 
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
+
+# Retrieve dataset from duck db
+conn = ddb.connect(config['ddb']['database'])
+df = conn.execute("SELECT * from anomaly_df").fetchdf()
 
 # Connecting to Database
 engine = create_engine(config['postgre']['engine'])
@@ -110,7 +113,7 @@ for i in range(0,3):
 
     query = "INSERT INTO anomaly_models VALUES (%s, %s, %s)"
     cursor.execute(query, (i, classifier[i], pickled))
-    conn_post.commit()
+    psqlconn.commit()
 
     print("commit model")
 
@@ -135,7 +138,11 @@ for i in range(0,3):
 
     query = "INSERT INTO anomaly_results VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     cursor.execute(query, (i, classifier[i], train_accuracy, train_precision, train_recall, train_f1_score, test_accuracy, test_precision, test_recall, test_f1_score))
-    conn_post.commit()
+    psqlconn.commit()
 
 cursor.close()
 print("end") # <- just to keep track of the process
+
+
+dbConnection.close()
+psqlconn.close()

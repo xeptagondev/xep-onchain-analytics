@@ -4,15 +4,18 @@ import psycopg2
 from sqlalchemy import create_engine
 import duckdb as ddb
 import json
+import os
 
 # Labels the daily bitcoin transactions as illicit with data from postgresql fetched from the etl pipeline
 
+os.chdir("xep-onchain-analytics")
+
 # Database configurations
-with open("/home/ec2-user/etl/extract/config.json") as config_file:
+with open("extract/config.json") as config_file:
     config = json.load(config_file)
 
 # Connecting to in-memory temporary database
-conn_ddb = ddb.connect(database = '/home/ec2-user/test/data/test.duckdb')
+conn_ddb = ddb.connect(config['ddb']['database'])
 
 query = """
     SELECT * 
@@ -45,16 +48,15 @@ pd.set_option('display.max_columns', None)
 
 # Read illicit labels from postgres
 select_sql = "SELECT * FROM ILLICIT_LABEL WHERE LABEL = 1"
-df_abuse = pd.read_sql(select_sql, conn_post)
+df_abuse = pd.read_sql(select_sql, psqlconn)
 
 df_in_abuse = pd.merge(df_bc_in, df_abuse, on='account', how='left')
 df = pd.merge(df_in_abuse, df_transactions, on='hash', how='inner')
 df.fillna(0, inplace=True)
 
-conn_ddb = ddb.connect(database = '/home/ec2-user/test/data/test.duckdb')
 conn_ddb.execute("CREATE OR REPLACE TABLE anomaly_df AS SELECT * FROM df")
 conn_ddb.execute("INSERT INTO anomaly_df SELECT * FROM df")
 
 cursor.close()
 conn_ddb.close()
-conn_post.close()
+psqlconn.close()
