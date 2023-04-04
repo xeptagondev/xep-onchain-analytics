@@ -1,94 +1,43 @@
+# Xeptagon Onchain Analytics
+  Backend architecture of Xeptagon opensource Onchain analytics using data obtained from blockdata and blockchair. The OnChain Analytics platform provides users with two categories of metrics, basic and computed. Basic metrics are those whose data is readily available without any need for additional computation, while computed metrics are those whose values are derived from the computation of basic metrics. For example, Market Value to Realized Value (MRVR) ratio to understand whether a cryptocurrency is undervalued or overvalued, Spent Output Profit Ratio (SOPR) to identify whether a crypto coin was sold at a profit or loss, and Relative Unrealized Profit/Loss to gauge investor's sentiment, are few of the wide range of metrics offered. These metrics have been consolidated based on their relevance and usefulness.  
+  
+ Read More From [Open-source On-Chain Analytics Platform by Xeptagon](https://www.xeptagon.com/blog-xeptagon-open-source-onchain-analytics-framework.html)
 
-# Xeptagon Blockchain Analytics
-An opensource framework for on-chain analytics.
+# System Architecture
+Architecture for Metrics Calculation present in Following diagram.
+![System Architecture for Metrics Calculation](https://github.com/xeptagondev/xep-onchain-internal/blob/main/Readme.png)
 
-## How to run this app
+# Running The Script
+1. Install Dependencies:
+    ```
+    pip3 install -r requirements.txt 
+    ```
+ 2. Put the Enviroment Variables as per your interest:
 
-```
-git clone https://github.com/xeptagondev/xep-onchain-analytics.git
-cd xep-onchain-analytics/webapp
-```
-Install all required packages by running:
-```
-pip install -r requirements.txt
-```
-
-Run this app locally with:
-```
-python3 application.py
-```
-
-And visit:
-```
-http://127.0.0.1:8050/
-```
-
-## To deploy app on AWS Elastic Beanstalk
-
-Create an instance of the web on AWS:
-```
-eb create
-```
-
-To update the app after making a change:
-```
-eb deploy
-```
-
-To open application URL in browser:
-```
-eb open
-```
-
-To delete app from AWS Cloud:
-```
-eb terminate
-```
-## To initialize database
-
-Create a `config.json` file (replace the credentials keys, password and file path with your own):
-```
-{
-    "ddb": {
-        "database": "/filepath"
-    },
-    "postgre": {
-        "engine": "postgresql://user:password@host:port/bitcoin",
-        "database": "bitcoin",
-        "host": "host",
-        "user": "user",
-        "password": "password",
-        "port": "port"
-    },
-    "APIkey": {
-        "blockdata": "APIKEY",
-        "blockchair": "APIKEY",
-        "bitcoinabuse": "APIKEY"
-    },
-    "init": {
-        "bitcoinabuse": 2
-    }
-}
-
-```
-
-Download the *BABD-13.csv* dataset from the link below and store it within a folder named `bitcoin_abuse` under `anomaly_detection`.
-
-```
-https://www.kaggle.com/datasets/lemonx/babd13
-```
-
-Change *start_date* and *end_date* parameters in `extract/main.py`
-
-Run main.py using the following command:
-
-```
-python3 extract/main.py
-```
-
-Run `init_bitcoin_abuse_to_postgresql.py` and `load_BABD_to_postgresql.py`:
-
-```
-python3 anomaly_detection/init_bitcoin_abuse_to_postgresql.py
-python3 anomaly_detection/load_BABD_to_postgresql.py
-```
+    ```
+      AWS_ACCESS_KEY_ID: <Put Your AWS Access Key>
+      AWS_SECRET_ACCESS_KEY: <Put Your AWS Secret Access Key>
+      PATH_VAR: <Put Your Path to Local Storage or Path AWS Bucket(or Key If any)>
+      POST_ENGINE: <Put Your DB Engine>
+      POST_DATABASE: <Put Your DB Name>
+      POST_HOST: <Put Your DB Host>
+      POST_USER: <Put Your DB User>
+      POST_PASSWORD: <Put Your DB Password>
+      POST_PORT: <Put Your DB Port>
+    ```
+     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY not neccessary if you're running on local storage & PATH_VAR should be path to your desired location to store downloded contents.<br>
+     If you're running on Docker update the envioment variables in docker-compose.yml also Use 
+     ```
+     POST_HOST:'host.docker.internal' 
+     ```
+   3. Run the Programme:<br><br>
+    After Complete Above Steps Execute:<br>
+    ```
+    python main.py
+    ```
+    <br><br>
+    If you're excuting on Docker:<br>
+    ```
+    docker-compose up --build   
+    ```
+    
