@@ -11,8 +11,6 @@ import boto3
 #Downloading Basic metrics from Blockchair   
 #metrics_desc:Metrics List |  cwd:local machine or aws s3 | bucket & key: only for aws s3 | dir: download path 
 def download(session, metrics_desc, cwd, bucket, key, dir):  
-    s3 = session.resource('s3')  
-    s3 = session.client('s3')
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -39,6 +37,8 @@ def download(session, metrics_desc, cwd, bucket, key, dir):
 
     # Upload the file to S3 if running in aws s3
          if cwd.startswith("s3://"):
+            s3 = session.resource('s3')  
+            s3 = session.client('s3')
             with open(os.path.join(dir, f"{charts}.tsv"), 'rb') as data:
                 s3.upload_fileobj(data, str(bucket), str(key)+f"{charts}.tsv")
                 print("Successfully Downloded "+str(charts)+".tsv")

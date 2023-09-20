@@ -9,8 +9,7 @@ import io
 import zipfile
 import pandas as pd
 def scrape(session, start_date, end_date, cwd, bucket, key):
-    s3 = session.resource('s3')
-    s3 = session.client("s3")
+
     delta = end_date - start_date   # returns timedelta
     # path_index to keep track of the different paths in our file directory and the url path
     path_index = [
@@ -47,6 +46,8 @@ def scrape(session, start_date, end_date, cwd, bucket, key):
             
             # download file to aws s3 or local machine
             if cwd.startswith("s3://"):
+                s3 = session.resource('s3')
+                s3 = session.client("s3")
                 os.system(' wget --no-check-certificate -O '+str(s3_name)+' '+str(url)+'')
                           
                 os.system(' aws s3 cp '+str(s3_name)+' {}'.format(cwd) )

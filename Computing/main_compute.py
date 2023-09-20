@@ -53,9 +53,10 @@ def computing(session, path):
     else:
         
         complete_path = os.path.join(path,'Complete')
+        download_path = os.path.join(path,'Downloads')
         if not os.path.exists(complete_path):
             os.mkdir(complete_path)
-        os.chdir('Downloads')
+        os.chdir(download_path)
         download_path = os.getcwd()
         # Datetime parameters
         path_index = os.listdir()
@@ -77,7 +78,7 @@ def computing(session, path):
                
             #Convert and Computation
             print("Start Converting tsv to PARQUET............")
-            convert(path, bucket=None, file_path=None, file_name=None, conn=conn)
+            convert(session, path, bucket=None, file_path=None, file_name=None, conn=conn)
             print("Complete Converting tsv to PARQUET............")
             
             print("Start Computing metrics............")

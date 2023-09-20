@@ -61,7 +61,7 @@ def downloading(session, cwd, metrics_desc):
             err_files = os.listdir()
             for err in err_files:
                 os.remove(err)
-            download(metrics_desc, dir)
+            download(session, metrics_desc, cwd, bucket, key, dir)
         pass
 
     print("Start Downloading BlockData.............")

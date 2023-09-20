@@ -1,6 +1,6 @@
 version: '3.9'
 services:
-  myapp1:
+  analytics:
     build: .
     environment:
       AWS_ACCESS_KEY_ID: <Put Your AWS Access Key>
