@@ -1,0 +1,21 @@
+{
+    "ddb": {
+        "database": "/filepath"
+    },
+    "postgre": {
+        "engine": "postgresql://postgres:hello123@host.docker.internal:5432/Xeptagon",
+        "database": "Xeptagon",
+        "host": "host.docker.internal",
+        "user": "postgres",
+        "password": "hello123",
+        "port": "5432"
+    },
+    "APIkey": {
+        "blockdata": "APIKEY",
+        "blockchair": "APIKEY",
+        "bitcoinabuse": "APIKEY"
+    },
+    "init": {
+        "bitcoinabuse": 2
+    }
+}
