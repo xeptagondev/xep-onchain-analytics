@@ -51,10 +51,7 @@ content = html.Div([
                     dbc.DropdownMenu(
                         [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
                         dbc.DropdownMenuItem(divider=True),
-                        html.Div([
-                            html.Span("to be implemented in future", className='disabled-info'),
-                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", disabled=True),
-                        ], className='disabled-coin'),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", href="/analytics/ethereum"),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
@@ -152,8 +149,8 @@ def create_charts():
 
 def update_dropdown(n1, n2, n3):
     label_id = {"Bitcoin": "Bitcoin (BTC)", "Ethereum": "Ethereum (ETH)", "Tether": "Tether (USDT)"}
-    if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
-        return "Bitcoin (BTC)"
+    # if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
+    #     return "Bitcoin (BTC)"
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
     return label_id[button_id]
 
