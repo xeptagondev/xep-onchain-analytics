@@ -3,11 +3,11 @@
         "database": "/filepath"
     },
     "postgre": {
-        "engine": "postgresql://postgres:hello123@host.docker.internal:5432/Xeptagon",
+        "engine": "postgresql://postgres:090506@localhost:5432/Xeptagon",
         "database": "Xeptagon",
-        "host": "host.docker.internal",
+        "host": "localhost",
         "user": "postgres",
-        "password": "hello123",
+        "password": "090506",
         "port": "5432"
     },
     "APIkey": {
