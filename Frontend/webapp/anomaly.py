@@ -60,10 +60,7 @@ content = html.Div([
                     dbc.DropdownMenu(
                         [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-2"),
                         dbc.DropdownMenuItem(divider=True),
-                        html.Div([
-                            html.Span("to be implemented in future", className='disabled-info'),
-                            dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-2", disabled=True),
-                        ], className='disabled-coin'),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-2"),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
@@ -143,7 +140,7 @@ def create_anomaly():
 
 ################## Callbacks ##############################
 
-# Update dropdown label 
+# Update dropdown label
 @app.callback(
     Output('cryptocurrency-select-2', "label"),
     [Input("Bitcoin-2", "n_clicks"), Input("Ethereum-2", "n_clicks"), Input("Tether-2", "n_clicks")]
@@ -160,54 +157,74 @@ def update_dropdown(n1, n2, n3):
 @app.callback(
     Output('anomaly-title', "children"),
     Output('anomaly-description', "children"),
-    [Input("anomaly-dtc", "n_clicks"), Input("anomaly-knn", "n_clicks"), Input("anomaly-xgboost", "n_clicks"), 
-    Input("outlier-isoForest", "n_clicks"), Input("outlier-autoEncoder", "n_clicks"), Input("outlier-kmeans", "n_clicks")]
+    [Input("Bitcoin-2", "n_clicks"), Input("Ethereum-2", "n_clicks"), 
+     Input("anomaly-dtc", "n_clicks"), Input("anomaly-knn", "n_clicks"), Input("anomaly-xgboost", "n_clicks"),
+     Input("outlier-isoForest", "n_clicks"), Input("outlier-autoEncoder", "n_clicks"), Input("outlier-kmeans", "n_clicks")]
 )
 
-def update_title(n1,n2,n3,n4,n5,n6):
+def update_title(n1,n2,n3,n4,n5,n6,n7,n8):
     titles_dict = {"anomaly-dtc": "Illicit Transactions Detected using Decision Tree", 
                    "anomaly-knn": "Illicit Transactions Detected using K-Nearest Neighbours", 
                    "anomaly-xgboost": "Illicit Transactions Detected using XGBoost",
                    "outlier-isoForest": "Outliers Detected using Isolation Forest", 
                    "outlier-autoEncoder": "Outliers Detected using Auto-Encoders", 
                    "outlier-kmeans": "Outliers Detected using K-Means Clustering"}
-    if not ctx.triggered: # Default
-        ov = """
-            Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option 
-            for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, 
-            quick, requires no former relationship between parties, and can facilitate seamless international trades. 
-            With the number of cybercriminal activities on the rise, members of the network would want to detect 
-            these criminals as soon as possible to prevent them from harming the network’s community and integrity. 
-            In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be 
-            implementing an anomaly detection framework which aims to reveal the identities of illicit transaction 
-            makers as well as spot outliers in the network.
-        """
     
-        address = """
-            The dataset is an input graph collected from Blockahir's bitcoin blockchain. A row in the dataset 
-            represents an input along with its transactions data which is joined by its transaction hash. 
-            Each node has 27 features used along with its hash which contains the transactions hash and its account 
-            which contains the address of the recipient. Each input is marked as illicit if the recipient has 
-            been reported to have used its account for illicit activites such as sextortion, blackmail, darknet market, 
-            ransomeware etc. Illicit address are collected from bitcoinabuse.com which has the cryptocurrency community 
-            reporting addresses where they have encountered activity from hackers and criminals to make the internet a safer place. 
-            Additional address are also collected from the BABD-13 dataset used in the Basic models are created and trained for 
-            demonstration purposes on 2022-07-01 data, parameters are available in our GitHub source code."""
+    ov = """
+        Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option 
+        for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, 
+        quick, requires no former relationship between parties, and can facilitate seamless international trades. 
+        With the number of cybercriminal activities on the rise, members of the network would want to detect 
+        these criminals as soon as possible to prevent them from harming the network’s community and integrity. 
+        In financial networks, thieves and illegal activities are often anomalous in nature. Hence, we will be 
+        implementing an anomaly detection framework which aims to reveal the identities of illicit transaction 
+        makers as well as spot outliers in the network.
+    """
 
-        outlier = """
-            An Outlier is a rare chance of occurrence within a given data set and is an observation point that is distant from 
-            other observations. Outliers act as signals that an anomalous transaction or activity might be taking place in the Blockchain network. 
-            In this scenario, we used a combination of metrices such as Transaction Volume, Transaction Count etc as features for our 
-            outlier detection models.
-        """
+    address_btc = """
+        The dataset is an input graph collected from Blockahir's bitcoin blockchain. A row in the dataset 
+        represents an input along with its transactions data which is joined by its transaction hash. 
+        Each node has 27 features used along with its hash which contains the transactions hash and its account 
+        which contains the address of the recipient. Each input is marked as illicit if the recipient has 
+        been reported to have used its account for illicit activites such as sextortion, blackmail, darknet market, 
+        ransomeware etc. Illicit address are collected from bitcoinabuse.com which has the cryptocurrency community 
+        reporting addresses where they have encountered activity from hackers and criminals to make the internet a safer place. 
+        Additional address are also collected from the BABD-13 dataset used in the Basic models are created and trained for 
+        demonstration purposes on 2022-07-01 data, parameters are available in our GitHub source code.
+    """
 
+    address_eth = """
+        [Insert information about ETH data here.]
+    """
+
+    outlier_btc = """
+        An Outlier is a rare chance of occurrence within a given data set and is an observation point that is distant from 
+        other observations. Outliers act as signals that an anomalous transaction or activity might be taking place in the Blockchain network. 
+        In this scenario, we used a combination of metrices such as Transaction Volume, Transaction Count etc as features for our 
+        outlier detection models.
+    """
+
+    outlier_eth = """
+        An Outlier is a rare chance of occurrence within a given data set and is an observation point that is distant from 
+        other observations. Outliers act as signals that an anomalous transaction or activity might be taking place in the Blockchain network. 
+        In this scenario, we used a combination of metrices such as [Insert ETH metrics here].
+    """
+    
+    selected = ctx.triggered[0]["prop_id"].split(".")[0]
+    if selected == "Bitcoin-2" or not ctx.triggered:
         card = []
         card.append(html.Div([html.P("Background of Anomaly Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov)]))
-        card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address)]))
-        card.append(html.Div([html.P("Outlier Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(outlier)]))
+        card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address_btc)]))
+        card.append(html.Div([html.P("Outlier Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(outlier_btc)]))
         return "Overview", card
-
-    selected = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    elif selected == "Ethereum-2":
+        card = []
+        card.append(html.Div([html.P("Background of Anomaly Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov)]))
+        card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address_eth)]))
+        card.append(html.Div([html.P("Outlier Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(outlier_eth)]))
+        return "Overview", card
+    
     return titles_dict[selected], None
 
 # Standalone method to reduce repeated chunks in callback below
