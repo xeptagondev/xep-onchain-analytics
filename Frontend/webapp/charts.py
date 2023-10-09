@@ -13,12 +13,13 @@ import re
 import duckdb as ddb
 import psycopg2
 import json
+# from dash.exceptions import PreventUpdate
 
 dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
 footer = create_footer()
 
-# Database configurations
+# Database configurations (Bitcoin)
 with open("config.json") as config_file:
     config = json.load(config_file)
 
@@ -29,16 +30,25 @@ psqlconn = psycopg2.connect(database = config['postgre']['database'],
                             password = config['postgre']['password'],
                             port = config['postgre']['port'])
 
-
-
 psqlcursor = psqlconn.cursor()
 
 # Dataframe for our metrics and indicators
 basic_metrics = pd.read_sql("SELECT * FROM basic_metrics", psqlconn)
 computed_metrics = pd.read_sql("SELECT * FROM computed_metrics", psqlconn)
 
+bm_eth = pd.read_sql("SELECT * FROM basic_metrics_ethereum", psqlconn)
+cm_eth = pd.read_sql("SELECT * FROM computed_metrics_ethereum", psqlconn)
+
+
 # Metrics and their descriptions
 metrics_desc = pd.read_csv("assets/metrics_desc.csv")
+md_eth = pd.read_csv("assets/metrics_desc_eth.csv")
+
+
+bm_dict = {'Bitcoin': basic_metrics, 'Ethereum': bm_eth}
+cm_dict = {'Bitcoin': computed_metrics, 'Ethereum': cm_eth}
+md_dict = {'Bitcoin': metrics_desc, 'Ethereum': md_eth}
+
 
 def show_metrics_list(idx, metric_description_df):
     return html.Div(
@@ -60,6 +70,12 @@ def show_metrics_list(idx, metric_description_df):
     )
 
 content = html.Div([
+
+    dcc.Store(id='bm-data', storage_type='session', data=bm_dict['Bitcoin'].to_dict('records')),
+    dcc.Store(id='cm-data', storage_type='session', data=cm_dict['Bitcoin'].to_dict('records')),
+    dcc.Store(id='md-data', storage_type='session', data=md_dict['Bitcoin'].to_dict('records')),
+
+
     dbc.Row([
             # Control panel column
             dbc.Col([
@@ -70,7 +86,7 @@ content = html.Div([
                     dbc.DropdownMenu(
                         [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin"),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum", href="/analytics/ethereum"),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum"),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
@@ -162,35 +178,57 @@ def create_charts():
 # Update dropdown label 
 @app.callback(
     Output('cryptocurrency-select', "label"),
+    Output('bm-data', "data"),
+    Output('cm-data', "data"),
+    Output('md-data', "data"),
     [Input("Bitcoin", "n_clicks"), Input("Ethereum", "n_clicks"), Input("Tether", "n_clicks")]
 )
 
 def update_dropdown(n1, n2, n3):
     label_id = {"Bitcoin": "Bitcoin (BTC)", "Ethereum": "Ethereum (ETH)", "Tether": "Tether (USDT)"}
-    # if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
-    #     return "Bitcoin (BTC)"
-    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    return label_id[button_id]
+    if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
+        bm = basic_metrics.to_dict('records')
+        cm = computed_metrics.to_dict('records')
+        md = metrics_desc.to_dict('records')
+        return "Bitcoin (BTC)", bm, cm, md
+        # raise PreventUpdate
+    else:
+        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+        bm = bm_dict[button_id].to_dict('records')
+        cm = cm_dict[button_id].to_dict('records')
+        md = md_dict[button_id].to_dict('records')
+        return label_id[button_id], bm, cm, md
+
 
 # Update listed metrics based on search term
 @app.callback(
    Output("list-group", "children"),
    Input("searchbar", "value"),
+   Input('md-data', 'modified_timestamp'),
+   State('md-data', 'data'),
    prevent_initial_call=True  
 )
-def update_metrics(searchterm):
-    if searchterm == "": # when search bar is cleared
-        return [show_metrics_list(f"{i}", metrics_desc) for i in range(len(metrics_desc))]
-    result = metrics_desc['metric_name'].tolist().copy()
-    for word in searchterm.split(" "):
-        count=0
-        while count < len(result):
-            if word.lower() not in result[count].lower():
-                result.remove(result[count])
-            else:
-                count+=1
-    metric_desc_filtered = metrics_desc[metrics_desc['metric_name'].isin(result)]
-    return [show_metrics_list(f"{i}", metric_desc_filtered) for i in range(len(metric_desc_filtered))]
+def update_metrics(searchterm, ts, md_data):
+    names_df = pd.DataFrame.from_dict(md_data)
+
+    triggered_comp = ctx.triggered_id
+    if triggered_comp == 'searchbar':
+
+        if searchterm == "": # when search bar is cleared
+            return [show_metrics_list(f"{i}", names_df) for i in range(len(names_df))]
+        result = names_df['metric_name'].tolist().copy()
+        for word in searchterm.split(" "):
+            count=0
+            while count < len(result):
+                if word.lower() not in result[count].lower():
+                    result.remove(result[count])
+                else:
+                    count+=1
+        metric_desc_filtered = names_df[names_df['metric_name'].isin(result)]
+        return [show_metrics_list(f"{i}", metric_desc_filtered) for i in range(len(metric_desc_filtered))]
+    
+    else:
+        return [show_metrics_list(f"{i}", names_df) for i in range(len(names_df))]
 
 # Method to plot basic metrics
 def plot_basic_metrics(fig, df, metric):
@@ -214,9 +252,16 @@ def plot_basic_metrics(fig, df, metric):
     Input('my-date-picker-range', 'start_date'),
     Input('my-date-picker-range', 'end_date'),
     Input('graph-title', 'children'),
-    Input({'type': 'list-group-item', 'index': ALL}, 'id')
+    Input({'type': 'list-group-item', 'index': ALL}, 'id'),
+    State('bm-data', 'data'),
+    State('cm-data', 'data'),
+    State('md-data', 'data'),
 )
-def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
+def update_line_chart(n_clicks_list, start, end, curr_metric, id_list, bm_data, cm_data, md_data):
+    bm_df = pd.DataFrame.from_dict(bm_data)
+    cm_df = pd.DataFrame.from_dict(cm_data)
+    md_df = pd.DataFrame.from_dict(md_data)
+
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
                 dict(count=1,
@@ -252,21 +297,21 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
         
     elif ctx.triggered_id is not None or 1 in n_clicks_list:
         clicked = id_list[n_clicks_list.index(1)]['index']
-        if metrics_desc[metrics_desc['metric_name'] == clicked]['is_computed'].values[0]:
-            fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[clicked],
+        if md_df[md_df['metric_name'] == clicked]['is_computed'].values[0]:
+            fig.add_trace(go.Scatter(x=cm_df['Date'], y=cm_df[clicked],
                     mode='lines', line = dict(color = "#0a275c")))
         else:
-            plot_basic_metrics(fig, basic_metrics, clicked)
+            plot_basic_metrics(fig, bm_df, clicked)
 
     # Update graph based on date range selected by user
     if start is not None and end is not None:
-        if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
-            filtered_df = computed_metrics[computed_metrics['Date'].between(start, end)]
+        if md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]:
+            filtered_df = cm_df[cm_df['Date'].between(start, end)]
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df[curr_metric],
                     mode='lines', line = dict(color = "#0a275c")))
         else:
-            filtered_df = basic_metrics[basic_metrics['Date'].between(start, end)]
+            filtered_df = bm_df[bm_df['Date'].between(start, end)]
             fig = go.Figure()
             plot_basic_metrics(fig, filtered_df, curr_metric)
         fig.update_xaxes(rangeslider=dict(
@@ -277,13 +322,13 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
 
     # Return default range when datepicker is empty/cleared
     elif start is None and end is None:
-        if metrics_desc[metrics_desc['metric_name'] == curr_metric]['is_computed'].values[0]:
+        if md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]:
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=computed_metrics['Date'], y=computed_metrics[curr_metric],
+            fig.add_trace(go.Scatter(x=cm_df['Date'], y=cm_df[curr_metric],
                     mode='lines', line = dict(color = "#0a275c")))
         else:
             fig = go.Figure()
-            plot_basic_metrics(fig, basic_metrics, curr_metric)
+            plot_basic_metrics(fig, bm_df, curr_metric)
         fig.update_layout(
             xaxis=default
         )
@@ -301,12 +346,18 @@ def update_line_chart(n_clicks_list, start, end, curr_metric, id_list):
     Output('metric-desc', "children"),
     Output('metric-formula', 'children'),
     Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'),
+    State('md-data', 'data')
 )
-def update_title_desc(n_clicks_list):
+def update_title_desc(n_clicks_list, md_data):
+    md_df = pd.DataFrame.from_dict(md_data)
+
     if not ctx.triggered or 1 not in n_clicks_list:
-        return "Price ($)", metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['description'], metrics_desc[metrics_desc['metric_name'] == 'Price ($)']['formula']
+        sorted_df = md_df.sort_values('metric_name')
+        display_metric = sorted_df['metric_name'].iloc[0]
+        return display_metric, md_df[md_df['metric_name'] == display_metric]['description'], md_df[md_df['metric_name'] == display_metric]['formula']
+        # return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula']
     clicked_id = ctx.triggered_id.index
-    return clicked_id, metrics_desc[metrics_desc['metric_name'] == clicked_id]['description'], metrics_desc[metrics_desc['metric_name'] == clicked_id]['formula']
+    return clicked_id, md_df[md_df['metric_name'] == clicked_id]['description'], md_df[md_df['metric_name'] == clicked_id]['formula']
 
 # Toggling metric's description to be shown or not
 @app.callback(

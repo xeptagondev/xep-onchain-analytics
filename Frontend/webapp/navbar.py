@@ -9,7 +9,7 @@ nav = dbc.Nav(
     #[dbc.NavItem(dbc.NavLink(page['name'], href=page['path'])) for page in dash.page_registry]
     [
         dbc.NavItem(dbc.NavLink("Home", active='exact', href="/")),
-        dbc.NavItem(dbc.NavLink("Analytics", active='partial', href="/analytics")),
+        dbc.NavItem(dbc.NavLink("Analytics", active='exact', href="/analytics")),
         dbc.NavItem(dbc.NavLink("Anomaly Detection", active='exact', href="/anomaly")),
     ]
 )

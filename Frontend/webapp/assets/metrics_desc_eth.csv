@@ -1,0 +1,10 @@
+index,metric_name,description,is_computed,formula
+0,Price ($),Current price per unit of Ethereum in USD,FALSE,-
+1,Circulating Supply,The total number of mined ETH circulating on the Ethereum network,FALSE,-
+2,Market Capitalisation,The market value of all coins in the network. It is calculated by taking the product of Circulating supply & Bitcoin's current price,TRUE,$Market$ $Capitalisation = Circulating$ $Supply$ x $Price_{curr} (USD)$
+3,Transaction Count,The total number of confirmed on-chain transactions.,FALSE,-
+4,Average Block Size,The average Ethereum block size in kilobytes,FALSE,-
+5,Average Gas Used (Gwei),The average gas used per block in a day on the Ethereum network.,FALSE,-
+6,Average Gas Limit,The average gas limit on Ethereum,FALSE,-
+7,Average Transaction Fee (USD),The average mining fee per transaction in USD,FALSE,-
+8,Average Transaction Value (USD),The fraction of total transaction value over the total number of transactions for each day,FALSE,-
