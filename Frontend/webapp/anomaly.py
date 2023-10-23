@@ -41,6 +41,9 @@ df_illicit_results = pd.read_sql('SELECT * FROM "anomaly_results"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
+df_eth_fraud= pd.read_sql('SELECT * FROM "anomaly_predictions_eth"', psqlconn)
+df_eth_fraud_results = pd.read_sql('SELECT * FROM "anomaly_results_eth"', psqlconn)
+
 df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 
                    'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 
                    'spending_value_usd': 'Spending Value (USD)', 'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 
@@ -287,7 +290,7 @@ def create_cluster(df, model):
     
     return graphs
 
-def create_table(df, model):
+def create_table_btc(df, model):
     tables = []
     model_name = model.split("_")[1]
 
@@ -364,13 +367,13 @@ def create_table(df, model):
 def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
     if ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-dtc':
-        graphs = create_table(df_illicit, 'y_dtc_pred')
+        graphs = create_table_btc(df_illicit, 'y_dtc_pred')
     
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-knn':
-        graphs = create_table(df_illicit, 'y_knn_pred')
+        graphs = create_table_btc(df_illicit, 'y_knn_pred')
     
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'anomaly-xgboost':
-        graphs = create_table(df_illicit, 'y_xgb_pred')
+        graphs = create_table_btc(df_illicit, 'y_xgb_pred')
     
     elif ctx.triggered[0]["prop_id"].split(".")[0] == 'outlier-isoForest':
         graphs = create_fig(df_isoForest, 'isoForest')

@@ -13,7 +13,8 @@ from sqlalchemy import create_engine
 import psycopg2
 import json
 
-os.chdir("xep-onchain-analytics/data")
+# CHANGE TO YOUR DIRECTORY
+os.chdir("/Users/jasminewang/Desktop/Capstone Files/xep-onchain-analytics/Frontend/")
 
 # Database configurations
 with open("extract/config.json") as config_file:
