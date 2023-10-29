@@ -8,7 +8,7 @@ import os
 # Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql
 
 # CHANGE TO YOUR DIRECTORY
-os.chdir("/Users/jasminewang/Desktop/Capstone Files/xep-onchain-analytics/Frontend/")
+os.chdir("C:/Users/Zephyrus G14/Desktop/Capstone Files/xep-onchain-analytics/Frontend")
 
 
 # Database configurations
