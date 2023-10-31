@@ -13,7 +13,8 @@ import re
 import duckdb as ddb
 import psycopg2
 import json
-# from dash.exceptions import PreventUpdate
+from dash.exceptions import PreventUpdate
+import dash_mantine_components as dmc
 
 dash.register_page(__name__, path='/analytics', name="Analytics")
 nav = create_navbar()
@@ -71,9 +72,9 @@ def show_metrics_list(idx, metric_description_df):
 
 content = html.Div([
 
-    dcc.Store(id='bm-data', storage_type='session', data=bm_dict['Bitcoin'].to_dict('records')),
-    dcc.Store(id='cm-data', storage_type='session', data=cm_dict['Bitcoin'].to_dict('records')),
-    dcc.Store(id='md-data', storage_type='session', data=md_dict['Bitcoin'].to_dict('records')),
+    dcc.Store(id='bm-data', storage_type='memory', data=bm_dict['Bitcoin'].to_dict('records')),
+    dcc.Store(id='cm-data', storage_type='memory', data=cm_dict['Bitcoin'].to_dict('records')),
+    dcc.Store(id='md-data', storage_type='memory', data=md_dict['Bitcoin'].to_dict('records')),
 
 
     dbc.Row([
@@ -125,14 +126,15 @@ content = html.Div([
                     dbc.Button(id='toast-toggle', n_clicks=0, className="bi bi-question-circle rounded-circle", color='white', style={'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
                     html.Div([
                         html.Span("Select your preferred date range.", className='date-picker-text', style = {'font-size':'12px'}),
-                            dcc.DatePickerRange(
-                            id='my-date-picker-range',
-                            clearable = True,
-                            min_date_allowed=date(2009, 1, 3),
-                            max_date_allowed=datetime.now(),
-                            start_date_placeholder_text='MM/DD/YYYY',
-                            end_date_placeholder_text='MM/DD/YYYY',
-                        ),
+                            dmc.DateRangePicker(
+                                id='my-date-picker-range',
+                                placeholder='MM/DD/YYYY - MM/DD/YYYY',
+                                inputFormat="MM/DD/YYYY",
+                                clearable = True,
+                                minDate=date(2009, 1, 3),
+                                maxDate=datetime.now(),
+                                style = {'width':'250px'}
+                            ),
                     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
                 # area for toggable toast to display metric's formula
@@ -187,11 +189,11 @@ def create_charts():
 def update_dropdown(n1, n2, n3):
     label_id = {"Bitcoin": "Bitcoin (BTC)", "Ethereum": "Ethereum (ETH)", "Tether": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
-        bm = basic_metrics.to_dict('records')
-        cm = computed_metrics.to_dict('records')
-        md = metrics_desc.to_dict('records')
-        return "Bitcoin (BTC)", bm, cm, md
-        # raise PreventUpdate
+        # bm = basic_metrics.to_dict('records')
+        # cm = computed_metrics.to_dict('records')
+        # md = metrics_desc.to_dict('records')
+        # return "Bitcoin (BTC)", bm, cm, md
+        raise PreventUpdate
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         bm = bm_dict[button_id].to_dict('records')
@@ -249,18 +251,23 @@ def plot_basic_metrics(fig, df, metric):
 @app.callback(
     Output("analytics-graph", "figure"), 
     Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'),
-    Input('my-date-picker-range', 'start_date'),
-    Input('my-date-picker-range', 'end_date'),
+    Input('my-date-picker-range', 'value'),
     Input('graph-title', 'children'),
     Input({'type': 'list-group-item', 'index': ALL}, 'id'),
     State('bm-data', 'data'),
     State('cm-data', 'data'),
     State('md-data', 'data'),
 )
-def update_line_chart(n_clicks_list, start, end, curr_metric, id_list, bm_data, cm_data, md_data):
+def update_line_chart(n_clicks_list, dates, curr_metric, id_list, bm_data, cm_data, md_data):
     bm_df = pd.DataFrame.from_dict(bm_data)
     cm_df = pd.DataFrame.from_dict(cm_data)
     md_df = pd.DataFrame.from_dict(md_data)
+
+    if dates is None:
+        start = None
+        end = None
+    else:
+        start, end = dates
 
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
@@ -352,10 +359,7 @@ def update_title_desc(n_clicks_list, md_data):
     md_df = pd.DataFrame.from_dict(md_data)
 
     if not ctx.triggered or 1 not in n_clicks_list:
-        sorted_df = md_df.sort_values('metric_name')
-        display_metric = sorted_df['metric_name'].iloc[0]
-        return display_metric, md_df[md_df['metric_name'] == display_metric]['description'], md_df[md_df['metric_name'] == display_metric]['formula']
-        # return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula']
+        return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula']
     clicked_id = ctx.triggered_id.index
     return clicked_id, md_df[md_df['metric_name'] == clicked_id]['description'], md_df[md_df['metric_name'] == clicked_id]['formula']
 
