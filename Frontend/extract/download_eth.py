@@ -9,15 +9,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 from datetime import date 
 import pandas as pd
 
-def download():
-    metrics_desc = pd.read_csv('chartsheet.csv')
+def download_eth():
+    metrics_desc = pd.read_csv('chartsheet_eth.csv')
 
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage') 
 
-    download_main_dir = os.path.join(os.getcwd(), 'data', 'basic_metrics', 'Bitcoin')
+    download_main_dir = os.path.join(os.getcwd(), 'data', 'basic_metrics', 'Ethereum')
     if not os.path.exists(download_main_dir):
         os.makedirs(download_main_dir)
     os.chdir(download_main_dir)
@@ -31,7 +31,7 @@ def download():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
     for charts in metrics_desc["chartsheets"]:
-        driver.get(f"https://blockchair.com/bitcoin/charts/{charts}")
+        driver.get(f"https://blockchair.com/ethereum/charts/{charts}")
         wait_time = 10
         download_tsv = WebDriverWait(driver, wait_time).until(
     EC.element_to_be_clickable((By.ID, 'download-tsv-button'))
@@ -42,3 +42,5 @@ def download():
         while not os.path.exists("data.tsv"):
              time.sleep(1)
         os.rename("data.tsv", f"{charts}.tsv")
+
+download_eth()

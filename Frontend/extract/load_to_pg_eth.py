@@ -9,5 +9,5 @@ def load_to_pg(engine, dbconn, start_date, end_date):
     print(basic_df.sort_values(by = ['Date']))
     print(computed_df.sort_values(by = ['Date']))
     
-    computed_df.to_sql('computed_metrics_ethereum', engine, index = False, if_exists = 'append')
-    basic_df.to_sql('basic_metrics_ethereum', engine, index = False, if_exists = 'append')
+    computed_df.to_sql('computed_metrics_ethereum', engine, index = False, if_exists = 'replace')
+    basic_df.to_sql('basic_metrics_ethereum', engine, index = False, if_exists = 'replace')

@@ -11,11 +11,17 @@ def convert():
 
     conn = ddb.connect()
 
+    download_dir = os.path.join(os.getcwd(), 'data', 'basic_metrics', 'Ethereum') # only converting for ETH for now
+    os.chdir(download_dir)
+
     path_index = os.listdir()
+    print(path_index)
 
     # iterate through the paths that are directories (data files excl. *.duckdb files)    
     for path in path_index:
+        print(path)
         if os.path.isdir(path):
+            print(f"path is a dir")
             os.chdir(path)
             # get all tsv files in the directory
             files = glob.glob('*.tsv')
@@ -23,6 +29,7 @@ def convert():
             
             # iterate through each file
             for file in files:
+                print(f"converting current file: {file}")
                 name = file.split('.')[0]
                 try:
                     # try to execute the query using the read_csv_auto function
