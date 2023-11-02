@@ -4,7 +4,14 @@ index,metric_name,description,is_computed,formula
 2,Market Capitalisation,The market value of all coins in the network. It is calculated by taking the product of Circulating supply & Ethereum's current price,TRUE,$Market$ $Capitalisation = Circulating$ $Supply$ x $Price_{curr} (USD)$
 3,Transaction Count,The total number of confirmed on-chain transactions.,FALSE,-
 4,Average Block Size,The average Ethereum block size in kilobytes,FALSE,-
-5,Average Gas Used (Gwei),The average gas used per block in a day on the Ethereum network.,FALSE,-
+5,Average Gas Used,The average gas used per block in a day on the Ethereum network.,FALSE,-
 6,Average Gas Limit,The average gas limit on Ethereum,FALSE,-
 7,Average Transaction Fee (USD),The average mining fee per transaction in USD,FALSE,-
 8,Average Transaction Value (USD),The fraction of total transaction value over the total number of transactions for each day,FALSE,-
+9,Transaction Volume (USD),The volume of USD transacted on Ethereum blockchain in USD.,False,-
+10,Average Block Interval (s),The average time between blocks generated in seconds.,False,-
+11,Average Gas Price (Gwei),The average gas price per transaction.,False,-
+12,Number of New Contracts,The number of newly created contracts in the network.,False,-
+13,Active Addresses,"The total number of unique active addresses, inclusive of senders and receivers.",True,-
+14,Active Sending Addresses,The number of addresses that were active as a sender.,True,-
+15,Active Receiving Addresses,The number of addresses that were active as a receiver.,True,-

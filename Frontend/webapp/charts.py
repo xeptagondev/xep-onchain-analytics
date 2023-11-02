@@ -148,11 +148,75 @@ content = html.Div([
                             style = {'width':'40vw'}
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
+
+                # hy test graph output print msg - to delete
+                html.Div(id='graph-test-print-msg'),
+
                 # area for metric description
                 html.Div([
                     html.P("Metric Description", style={'font-weight':'bold', 'textDecoration':'underline'}),
                     html.P(id='metric-desc', style={'width':'48vw'}),
                 ]),
+
+                dmc.Grid(
+                    children=[
+                        dmc.Col(html.Div("Select Price scale: "), span=2),
+                        dmc.Col(html.Div(
+                            [
+                                dmc.SegmentedControl(
+                                    id="yaxis-type",
+                                    value="Log",
+                                    radius=20,
+                                    data=[
+                                        {"value": "Log", "label": "Log"},
+                                        {"value": "Linear", "label": "Linear"},
+                                    ],
+                                    color = "teal"
+                                )
+                            ]
+                        ), span=2),
+                    ],
+                    # gutter="xs", 
+                    justify='flex-end'
+                ),
+
+                # dmc.Stack(
+                #     [
+                #         html.Div("Select Price scale: ", style={"font-weight": "bold", "color":"teal"}),
+                #         html.Div(
+                #             [
+                #                 dmc.SegmentedControl(
+                #                     id="yaxis-type",
+                #                     value="Log",
+                #                     radius=20,
+                #                     data=[
+                #                         {"value": "Log", "label": "Log"},
+                #                         {"value": "Linear", "label": "Linear"},
+                #                     ],
+                #                     color = "teal"
+                #                 )
+                #             ]
+                #         )
+                #     ],
+                #     justify='flex-end',
+                #     align='right'    
+                # ),
+
+                # html.Div(
+                #     [
+                #         html.P("Select Price data axis scale: "),
+                #         dmc.SegmentedControl(
+                #             id="yaxis-type",
+                #             value="Log",
+                #             radius=20,
+                #             data=[
+                #                 {"value": "Log", "label": "Log"},
+                #                 {"value": "Linear", "label": "Linear"},
+                #             ],
+                #             color = "teal"
+                #         )
+                #     ]
+                # ),
 
                 # area to display selected metric's graph
                 dcc.Loading(
@@ -164,8 +228,6 @@ content = html.Div([
 
     ], justify = 'evenly', style={'border-top': '2px solid grey', 'border-bottom': '1px solid grey'})
 ], style = {'padding-bottom':'60px'})
-
-
 
 def create_charts():
     layout = html.Div([
@@ -188,18 +250,18 @@ def create_charts():
 
 def update_dropdown(n1, n2, n3):
     label_id = {"Bitcoin": "Bitcoin (BTC)", "Ethereum": "Ethereum (ETH)", "Tether": "Tether (USDT)"}
-    if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
+    if (n1 is None and n2 is None and n3 is None) or not ctx.triggered: # if dropdown button is not clicked
         # bm = basic_metrics.to_dict('records')
         # cm = computed_metrics.to_dict('records')
         # md = metrics_desc.to_dict('records')
         # return "Bitcoin (BTC)", bm, cm, md
         raise PreventUpdate
     else:
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-        bm = bm_dict[button_id].to_dict('records')
-        cm = cm_dict[button_id].to_dict('records')
-        md = md_dict[button_id].to_dict('records')
-        return label_id[button_id], bm, cm, md
+        button_id = ctx.triggered[0]["prop_id"].split(".")[0] # "Bitcoin" or "Ethereum"
+        bm = bm_dict[button_id].to_dict('records') # returns basic_metrics / bm_eth
+        cm = cm_dict[button_id].to_dict('records') # returns computed_metrics / cm_eth
+        md = md_dict[button_id].to_dict('records') # returns metrics_desc / md_eth
+        return label_id[button_id], bm, cm, md # returns dropdown label: Bitcoin (BTC) / Ethereum (ETH) / Tether (USDT)
 
 
 # Update listed metrics based on search term
@@ -232,33 +294,72 @@ def update_metrics(searchterm, ts, md_data):
     else:
         return [show_metrics_list(f"{i}", names_df) for i in range(len(names_df))]
 
-# Method to plot basic metrics
-def plot_basic_metrics(fig, df, metric):
-    if (metric != "Difficulty Ribbon"):
-        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], mode='lines', line = dict(color = "#0a275c")))
-    else:
-        fig.add_trace(go.Scatter(x=df['Date'], y=df["Difficulty"], mode='lines', line = dict(color = "#0a275c"), name = "Market"))
+# Method to plot computed metrics
+def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metric, price_axis_scale): # need basic_metrics_df to get price data
+    fig.add_trace(go.Scatter(x=computed_metrics_df['Date'], y=computed_metrics_df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3"))) # original colour - #0a275c
+    fig.add_trace(go.Scatter(x=computed_metrics_df['Date'], y=basic_metrics_df["Price ($)"], yaxis='y2', name='Price ($)', mode='lines', line = dict(color = "#0a275c"))) # plotting price data on same chart
+    
+    fig.update_layout(
+    # create first y axis
+    yaxis=dict(title=metric),
 
-        rolling_window = [14, 25, 40, 60, 90, 128, 200]
-        for i in rolling_window:
-            rolling_mean = df["Difficulty"].rolling(window=i).mean()
-            trace = go.Scatter(x = df['Date'], y=rolling_mean, mode='lines', line = dict(color = "rgba(255, 0, 0, 0.5)"), name = "D{}".format(i))
-            fig.add_trace(trace)
-
+    # Create second y axis
+    yaxis2=dict(title="Price ($)",
+                overlaying="y",
+                side="right",
+                type='log' if price_axis_scale == 'Log' else 'linear'), # to use log scale by default,
+    
+    legend=dict(orientation="h", yanchor="top", y=1.02)
+    )
     return fig
+
+# Method to plot basic metrics
+def plot_basic_metrics(fig, df, metric, price_axis_scale):
+    if metric == "Price ($)":
+        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3")))
+        fig.update_yaxes(title_text = metric, type='log' if price_axis_scale == 'Log' else 'linear')
+
+    else:
+        # plot other metrics with Price data added 
+        fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3")))
+        fig.add_trace(go.Scatter(x=df['Date'], y=df["Price ($)"], yaxis='y2', name='Price ($)', mode='lines', line = dict(color = "#0a275c"))) # plotting price data on same chart
+
+        if (metric == "Difficulty"):
+            rolling_window = [14, 25, 40, 60, 90, 128, 200]
+            for i in rolling_window:
+                rolling_mean = df["Difficulty"].rolling(window=i).mean()
+                trace = go.Scatter(x = df['Date'], y=rolling_mean, mode='lines', line = dict(color = "rgba(255, 0, 0, 0.5)"), name = "D{}".format(i))
+                fig.add_trace(trace)
+
+        fig.update_layout(
+        # create first y axis for selected metric
+        yaxis=dict(title=metric),
+
+        # Create second y axis for Price
+        yaxis2=dict(title="Price ($)",
+                    overlaying="y",
+                    side="right",
+                    type='log' if price_axis_scale == 'Log' else 'linear'), # to use log scale by default
+
+        legend=dict(orientation="h", yanchor="top", y=1.02)
+        )
+
+        return fig
 
 # Update line graph data
 @app.callback(
-    Output("analytics-graph", "figure"), 
-    Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'),
-    Input('my-date-picker-range', 'value'),
-    Input('graph-title', 'children'),
-    Input({'type': 'list-group-item', 'index': ALL}, 'id'),
+    Output("analytics-graph", "figure"), # updating figure property of the dcc.Graph compoent to display new data
+    Output('graph-test-print-msg', 'children'), # hy added to see which part of update_line_charts is producing the chart -- to delete
+    Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
+    Input('my-date-picker-range', 'value'), # dates
+    Input('graph-title', 'children'), # curr_metric
+    Input({'type': 'list-group-item', 'index': ALL}, 'id'), # id_list
+    Input('yaxis-type', 'value'), # price_axis_scale - linear / log scale for price data
     State('bm-data', 'data'),
     State('cm-data', 'data'),
     State('md-data', 'data'),
 )
-def update_line_chart(n_clicks_list, dates, curr_metric, id_list, bm_data, cm_data, md_data):
+def update_line_chart(n_clicks_list, dates, curr_metric, id_list, price_axis_scale, bm_data, cm_data, md_data):
     bm_df = pd.DataFrame.from_dict(bm_data)
     cm_df = pd.DataFrame.from_dict(cm_data)
     md_df = pd.DataFrame.from_dict(md_data)
@@ -268,6 +369,8 @@ def update_line_chart(n_clicks_list, dates, curr_metric, id_list, bm_data, cm_da
         end = None
     else:
         start, end = dates
+
+    print_msg = html.Div("testing first ah") # initialising value
 
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
@@ -298,72 +401,81 @@ def update_line_chart(n_clicks_list, dates, curr_metric, id_list, bm_data, cm_da
         type="date"
     )
     fig = go.Figure()
-    if ctx.triggered_id is None or 1 not in n_clicks_list:
-        fig.add_trace(go.Scatter(x=basic_metrics['Date'], y=basic_metrics['Price ($)'],
-                    mode='lines', line = dict(color = "#0a275c")))
+    if ctx.triggered_id is None or 1 not in n_clicks_list: # if user did not select any metric, show Price chart by default
+        print_msg = "chart generated as triggered_id is None or 1 not in n_clicks_list"
+        plot_basic_metrics(fig, bm_df, "Price ($)", price_axis_scale)
         
-    elif ctx.triggered_id is not None or 1 in n_clicks_list:
-        clicked = id_list[n_clicks_list.index(1)]['index']
-        if md_df[md_df['metric_name'] == clicked]['is_computed'].values[0]:
-            fig.add_trace(go.Scatter(x=cm_df['Date'], y=cm_df[clicked],
-                    mode='lines', line = dict(color = "#0a275c")))
-        else:
-            plot_basic_metrics(fig, bm_df, clicked)
+    elif ctx.triggered_id is not None or 1 in n_clicks_list: # if user clicked on a metric
+        clicked = id_list[n_clicks_list.index(1)]['index'] # get metric name of the very first metric that user clicked on 
+        is_computed = md_df[md_df['metric_name'] == clicked]['is_computed'].values[0]
+        if clicked == "Difficulty Ribbon":
+            clicked = "Difficulty"
+        if is_computed: # if selected metric is a computed one
+            plot_computed_metrics(fig, cm_df, bm_df, clicked, price_axis_scale)
+        else: # selected metric is not a computed one - basic metric
+            print_msg = "chart generated as this is the first metric user clicked on && user selected BASIC metric"
+            plot_basic_metrics(fig, bm_df, clicked, price_axis_scale)
 
     # Update graph based on date range selected by user
     if start is not None and end is not None:
-        if md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]:
+        is_computed = md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]
+        if curr_metric == "Difficulty Ribbon":
+            curr_metric = "Difficulty"
+        if is_computed: # computed metric
+            print_msg = "chart generated as start is Not None and end is not None && user selected COMPUTED metric"
             filtered_df = cm_df[cm_df['Date'].between(start, end)]
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df[curr_metric],
-                    mode='lines', line = dict(color = "#0a275c")))
-        else:
+            plot_computed_metrics(fig, filtered_df, bm_df, curr_metric, price_axis_scale) # bm_df is for price data
+        else: # basic metrics
+            print_msg = "chart generated as start is Not None and end is not None && user selected BASIC metric"
             filtered_df = bm_df[bm_df['Date'].between(start, end)]
             fig = go.Figure()
-            plot_basic_metrics(fig, filtered_df, curr_metric)
+            plot_basic_metrics(fig, filtered_df, curr_metric, price_axis_scale)
         fig.update_xaxes(rangeslider=dict(
                             visible=True,
                             bgcolor="#d0e0e5",
                             thickness=0.1))
-        fig.update_yaxes(title_text = curr_metric)
 
     # Return default range when datepicker is empty/cleared
     elif start is None and end is None:
-        if md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]:
+        is_computed = md_df[md_df['metric_name'] == curr_metric]['is_computed'].values[0]
+        if curr_metric == "Difficulty Ribbon":
+            curr_metric = "Difficulty"
+        if is_computed: # computed metric
+            print_msg = "chart generated from where date filter is empty (start & end is None) && selected metric is a COMPUTED metric"
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=cm_df['Date'], y=cm_df[curr_metric],
-                    mode='lines', line = dict(color = "#0a275c")))
-        else:
+            plot_computed_metrics(fig, cm_df, bm_df, curr_metric, price_axis_scale)
+        else: # basic metric
+            print_msg = "chart generated from where date filter is empty (start & end is None) && selected metric is a BASIC metric"
             fig = go.Figure()
-            plot_basic_metrics(fig, bm_df, curr_metric)
+            plot_basic_metrics(fig, bm_df, curr_metric, price_axis_scale)
         fig.update_layout(
             xaxis=default
         )
-        fig.update_yaxes(title_text = curr_metric)
     fig.update_traces(hovertemplate='Date: %{x} <br>Value: %{y}')
     fig.update_xaxes(title_text = "Date")
     fig.update_layout(plot_bgcolor='white')
     fig.update_xaxes(rangeselector_font_size = 15)
     
-    return fig
+    return fig, print_msg
 
 # Update graph title and description
 @app.callback(
     Output('graph-title', 'children'),
     Output('metric-desc', "children"),
     Output('metric-formula', 'children'),
-    Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'),
+    Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
     State('md-data', 'data')
 )
 def update_title_desc(n_clicks_list, md_data):
     md_df = pd.DataFrame.from_dict(md_data)
 
-    if not ctx.triggered or 1 not in n_clicks_list:
-        return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula']
-    clicked_id = ctx.triggered_id.index
+    if not ctx.triggered: # no user selection yet
+        return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula'] # return price by default
+    clicked_id = ctx.triggered_id.index # metric name that was clicked
     return clicked_id, md_df[md_df['metric_name'] == clicked_id]['description'], md_df[md_df['metric_name'] == clicked_id]['formula']
 
-# Toggling metric's description to be shown or not
+# Toggling metric's formula to be shown or not
 @app.callback(
     Output("toast", "is_open"),
     Input("toast-toggle", "n_clicks"),
