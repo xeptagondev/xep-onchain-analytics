@@ -3,7 +3,11 @@ import duckdb as ddb
 import glob
 import pandas as pd
 
-def convert():
+def convert(config):
+    print(os.getcwd())
+
+    cryptocurrencies = config['cryptocurrencies']
+
     # query string sections
     str1 = "COPY (SELECT * FROM read_csv_auto('"
     str2 = "', delim='\t', header=True, sample_size=-1)) TO '"
@@ -11,35 +15,43 @@ def convert():
 
     conn = ddb.connect()
 
-    download_dir = os.path.join(os.getcwd(), 'data', 'basic_metrics', 'Ethereum') # only converting for ETH for now
-    os.chdir(download_dir)
+    for crypto in cryptocurrencies:
 
-    path_index = os.listdir()
-    print(path_index)
+        os.chdir(crypto) # cd into crypto from data
 
-    # iterate through the paths that are directories (data files excl. *.duckdb files)    
-    for path in path_index:
-        print(path)
-        if os.path.isdir(path):
-            print(f"path is a dir")
-            os.chdir(path)
-            # get all tsv files in the directory
-            files = glob.glob('*.tsv')
-            print(files)
-            
-            # iterate through each file
-            for file in files:
-                print(f"converting current file: {file}")
-                name = file.split('.')[0]
-                try:
-                    # try to execute the query using the read_csv_auto function
-                    query = str1 + file + str2 + name + str3
-                    conn.execute(query)
-                except RuntimeError:
-                    # runtime error can be avoided by just reading the file using pandas which is slower
-                    df = pd.read_csv(file, sep = '\t')
-                    query = "COPY df TO '" + name + str3
-                    conn.execute(query)
-                #remove the original .tsv file to save space
-                os.system("rm " + file)
-            os.chdir('../')
+        path_index = os.listdir() # list all sub-directories
+
+        # iterate through the paths that are directories (data files excl. *.duckdb files)    
+        for path in path_index:
+            if os.path.isdir(path):
+                os.chdir(path)
+                # get all tsv files in the directory
+                files = glob.glob('*.tsv')
+                print(os.getcwd())
+                print(files)
+                
+                # iterate through each file
+                for file in files:
+                    name = file.split('.')[0]
+                    print(f"filename: {name}")
+                    try:
+                        print('in try')
+                        # try to execute the query using the read_csv_auto function
+                        query = str1 + file + str2 + name + str3
+                        print(f"query from duckdb: {query}")
+                        conn.execute(query)
+                        print('after executing query in try')
+                    except RuntimeError:
+                        # runtime error can be avoided by just reading the file using pandas which is slower
+                        print('in except')
+                        df = pd.read_csv(file, sep = '\t')
+                        query = "COPY df TO '" + name + str3
+                        print(f"query from pandas: {query}")
+                        conn.execute(query)
+                        print("after executing query in pandas")
+                    #remove the original .tsv file to save space
+                    os.system("rm " + file)
+                os.chdir('../')
+                print(os.getcwd())
+        os.chdir('../')
+        print(f"final dir: {os.getcwd()}")

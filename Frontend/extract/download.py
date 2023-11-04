@@ -9,36 +9,48 @@ from webdriver_manager.chrome import ChromeDriverManager
 from datetime import date 
 import pandas as pd
 
-def download():
-    metrics_desc = pd.read_csv('chartsheet.csv')
+def download(config):
 
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage') 
+    cryptocurrencies = config['cryptocurrencies']
 
-    download_main_dir = os.path.join(os.getcwd(), 'data', 'basic_metrics', 'Bitcoin')
-    if not os.path.exists(download_main_dir):
-        os.makedirs(download_main_dir)
-    os.chdir(download_main_dir)
-    dir = os.path.join(download_main_dir,str(date.today()))
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-    os.chdir(dir)
-    print(f"current dir: {os.getcwd()}")
+    for crypto in cryptocurrencies:
+        # metrics_desc = pd.read_csv('chartsheet_eth.csv')
 
-    chrome_options.add_experimental_option("prefs", {"download.default_directory": dir})
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        metrics_desc = config['blockchair_metrics'][crypto]
 
-    for charts in metrics_desc["chartsheets"]:
-        driver.get(f"https://blockchair.com/bitcoin/charts/{charts}")
-        wait_time = 10
-        download_tsv = WebDriverWait(driver, wait_time).until(
-    EC.element_to_be_clickable((By.ID, 'download-tsv-button'))
-        )
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage') 
 
-        download_tsv.click()
+        # os.chdir('basic_metrics')
+        # download_dir = os.getcwd()
+        print(f"curr work dir: {os.getcwd()}")
+        if not os.path.exists(crypto):
+            os.mkdir(crypto)
+        os.chdir(crypto)
+        print(f"after changing dir (should be crypto name): {os.getcwd()}")
 
-        while not os.path.exists("data.tsv"):
-             time.sleep(1)
-        os.rename("data.tsv", f"{charts}.tsv")
+        download_dir = os.path.join(os.getcwd(), "basic_metrics")
+        if not os.path.exists(download_dir):
+            os.mkdir(download_dir)
+        print(download_dir)
+        # print(os.getcwd())
+
+        chrome_options.add_experimental_option("prefs", {"download.default_directory": download_dir})
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
+        for charts in metrics_desc:
+            driver.get(f"https://blockchair.com/{crypto}/charts/{charts}")
+            wait_time = 10
+            download_tsv = WebDriverWait(driver, wait_time).until(
+        EC.element_to_be_clickable((By.ID, 'download-tsv-button'))
+            )
+
+            download_tsv.click()
+
+            while not os.path.exists("basic_metrics/data.tsv"):
+                time.sleep(1)
+                print('sleep')
+            os.rename("basic_metrics/data.tsv", f"basic_metrics/{charts}.tsv")
+    os.chdir('../')
