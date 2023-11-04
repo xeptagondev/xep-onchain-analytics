@@ -3,15 +3,20 @@ index,metric_name,description,is_computed,formula
 1,Circulating Supply,The total number of mined ETH circulating on the Ethereum network,FALSE,-
 2,Market Capitalisation,The market value of all coins in the network. It is calculated by taking the product of Circulating supply & Ethereum's current price,TRUE,$Market$ $Capitalisation = Circulating$ $Supply$ x $Price_{curr} (USD)$
 3,Transaction Count,The total number of confirmed on-chain transactions.,FALSE,-
-4,Average Block Size,The average Ethereum block size in kilobytes,FALSE,-
-5,Average Gas Used,The average gas used per block in a day on the Ethereum network.,FALSE,-
-6,Average Gas Limit,The average gas limit on Ethereum,FALSE,-
-7,Average Transaction Fee (USD),The average mining fee per transaction in USD,FALSE,-
-8,Average Transaction Value (USD),The fraction of total transaction value over the total number of transactions for each day,FALSE,-
-9,Transaction Volume (USD),The volume of USD transacted on Ethereum blockchain in USD.,False,-
-10,Average Block Interval (s),The average time between blocks generated in seconds.,False,-
-11,Average Gas Price (Gwei),The average gas price per transaction.,False,-
-12,Number of New Contracts,The number of newly created contracts in the network.,False,-
-13,Active Addresses,"The total number of unique active addresses, inclusive of senders and receivers.",True,-
-14,Active Sending Addresses,The number of addresses that were active as a sender.,True,-
-15,Active Receiving Addresses,The number of addresses that were active as a receiver.,True,-
+4,Transaction Count by Value,The total number of confirmed on-chain transactions by value.,TRUE,-
+5,Average Block Size,The average Ethereum block size in kilobytes,FALSE,-
+6,Average Gas Used,The average gas used per block in a day on the Ethereum network.,FALSE,-
+7,Average Gas Limit,The average gas limit on Ethereum,FALSE,-
+8,Average Transaction Fee (USD),The average mining fee per transaction in USD,FALSE,-
+9,Average Transaction Value (USD),The fraction of total transaction value over the total number of transactions for each day,FALSE,-
+10,Blocks Mined,The number of blocks generated in a day on the Ethereum network.,TRUE,-
+11,Transaction Volume (USD),The volume of USD transacted on Ethereum blockchain in USD.,FALSE,-
+12,Average Block Interval (s),The average time between blocks generated in seconds.,FALSE,-
+13,Average Gas Price (Gwei),The average gas price per transaction.,FALSE,-
+14,Number of New Contracts,The number of newly created contracts in the network.,FALSE,-
+15,Active Addresses,"The total number of unique active addresses, inclusive of senders and receivers.",TRUE,-
+16,Active Sending Addresses,The number of addresses that were active as a sender.,TRUE,-
+17,Active Receiving Addresses,The number of addresses that were active as a receiver.,TRUE,-
+18,Network Value to Transaction (NVT),"NVT represents the ratio between Market Capitalisation and transferred volume. An upward trend will indicate that the coin pricing is at a premium, whereby Market Capitalisation is growing at a pace greater than that of transferred volume. A downward trend will indicate that the coin pricing is at a discount, whereby Market Capitalisation is growing at a pace smaller than that of transferred volume. A constant trend will mean that both Market Capitalisation and transferred volume are in equlibrium.",TRUE,$NVT$ $ratio$ = $Market Capitalisation \over Transaction Volume (USD)$
+19,Velocity,Measure of how quickly units are circulating in the network. It is also the inverse of NVT ratio.,TRUE,$Velocity$ = $1 \over NVT$ = $Transaction Volume (USD) \over Market Capitalisation$
+20,ERC-20 Transfers,The amount of ERC-20 transfers on the Ethereum network.,FALSE,-

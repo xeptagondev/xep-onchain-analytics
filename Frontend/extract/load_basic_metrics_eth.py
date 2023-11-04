@@ -22,11 +22,11 @@ def load_basic_metrics(conn):
             ABS."avg(Block size (kB)) – Ethereum" AS 'Average Block Size',
             ABI."f(number(86400)/count()) – Ethereum" AS 'Average Block Interval (s)',
             AGP."avg(Gas price) – Ethereum" AS 'Average Gas Price (Gwei)',
-            AGU."avg(Gas used – Blocks (Gwei)) – Ethereum" AS 'Average  (Gwei)',
+            AGU."avg(Gas used – Blocks (Gwei)) – Ethereum" AS 'Average Gas Used (Gwei)',
             AGL."avg(Gas limit – Blocks) – Ethereum" AS 'Average Gas Limit',
             D."max(Difficulty – Blocks) – Ethereum" AS 'Difficulty',
             NNC."Transactions count – Ethereum" AS 'Number of New Contracts',
-            DSB."BurntFees" AS 'Daily Supply Burned' 
+            ERCT."ERC-20 transactions count – Ethereum" AS 'ERC-20 Transfers',
         FROM 
             read_parquet('circulation.parquet') CS
         LEFT JOIN read_parquet('price.parquet') P ON CS.Time = P.Time
@@ -41,7 +41,7 @@ def load_basic_metrics(conn):
         LEFT JOIN read_parquet('average-gas-limit.parquet') AGL ON CS.Time = AGL.Time
         LEFT JOIN read_parquet('difficulty.parquet') D ON CS.Time = D.Time
         LEFT JOIN read_parquet('number-of-new-contracts.parquet') NNC ON CS.Time = NNC.Time
-        LEFT JOIN read_parquet('dailyethburnt.parquet') DSB ON CS.Time = DSB.Time
+        LEFT JOIN read_parquet('erc20-transfers.parquet') ERCT on CS.Time = ERCT.Time
             """
     # os.chdir('../')
     # print(f"after query: {os.getcwd()}")

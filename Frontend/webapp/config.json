@@ -3,11 +3,11 @@
         "database": "/filepath"
     },
     "postgre": {
-        "engine": "postgresql://postgres:sql123@host.docker.internal:5432/test",
-        "database": "test",
+        "engine": "postgresql://postgres:pspsGRES45@host.docker.internal:5432/on-chain-xep-",
+        "database": "on-chain-xep-",
         "host": "host.docker.internal",
         "user": "postgres",
-        "password": "sql123",
+        "password": "pspsGRES45",
         "port": "5432"
     },
     "APIkey": {
