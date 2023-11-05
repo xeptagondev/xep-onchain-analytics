@@ -7,3 +7,4 @@
 # Config file
 /Frontend/webapp/config.json
 /Backend/docker-compose.yml
+**/config.json
