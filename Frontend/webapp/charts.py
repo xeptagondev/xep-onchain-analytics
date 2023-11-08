@@ -40,6 +40,25 @@ computed_metrics = pd.read_sql("SELECT * FROM computed_metrics", psqlconn)
 # Metrics and their descriptions
 metrics_desc = pd.read_csv("assets/metrics_desc.csv")
 
+def show_metrics_list(idx, metric_description_df):
+    return html.Div(
+        [
+            dbc.ListGroupItem(
+                sorted(metric_description_df['metric_name'].tolist())[int(idx)], # metric_name
+                action=True,
+                id={"type": "list-group-item", "index": sorted(metric_description_df['metric_name'].tolist())[int(idx)]},
+                color = '#E8EBEE00', 
+                style = {'font-size': '13px'},
+                # class_name = "border-0"
+            ),
+            dbc.Tooltip(
+                metric_description_df[metric_description_df['metric_name'] == sorted(metric_description_df['metric_name'].tolist())[int(idx)]]['description'],
+                id="tooltip" + idx, 
+                target={"type": "list-group-item", "index": sorted(metric_description_df['metric_name'].tolist())[int(idx)]}
+            )
+        ]
+    )
+
 content = html.Div([
     dbc.Row([
             # Control panel column
@@ -74,11 +93,10 @@ content = html.Div([
                         style = {'text-align':'center', 'width': '200px', 'height':'35px', 'border':'1px solid black','font-size':'13px', 'font-family': 'Open Sans'}
                     ),
 
-                    dbc.ListGroup(
-                        [dbc.ListGroupItem(x, action=True, id={"type": "list-group-item", "index": x}, color = '#E8EBEE00', style = {'font-size': '13px'}) for x in sorted(metrics_desc['metric_name'].tolist())], 
-                        id='list-group', 
-                        flush = True,
-                        style={'margin-top':'15px', 'overflow-y':'scroll', 'width':'350px', 'height': '450px'})
+                    dbc.ListGroup([show_metrics_list(f"{i}", metrics_desc) for i in range(len(metrics_desc))],
+                                    id='list-group', 
+                                    flush = True,
+                                    style={'margin-top':'15px', 'overflow-y':'scroll', 'width':'350px', 'height': '450px'})
                     
                 ], justify = 'center', style = {'padding':'25px', 'border-top': '2px solid grey'}),
 
@@ -162,8 +180,7 @@ def update_dropdown(n1, n2, n3):
 )
 def update_metrics(searchterm):
     if searchterm == "": # when search bar is cleared
-        return [dbc.ListGroupItem(x, action=True, id={"type": "list-group-item", "index": x}, color = '#E8EBEE00', style = {'font-size': '13px'}) for x in sorted(metrics_desc['metric_name'].tolist())]
-    # When there is non-empty input to search bar
+        return [show_metrics_list(f"{i}", metrics_desc) for i in range(len(metrics_desc))]
     result = metrics_desc['metric_name'].tolist().copy()
     for word in searchterm.split(" "):
         count=0
@@ -172,7 +189,8 @@ def update_metrics(searchterm):
                 result.remove(result[count])
             else:
                 count+=1
-    return [dbc.ListGroupItem(i, action=True, id={"type": "list-group-item", "index": i}, color = '#E8EBEE00', style = {'font-size': '13px'}) for i in result]
+    metric_desc_filtered = metrics_desc[metrics_desc['metric_name'].isin(result)]
+    return [show_metrics_list(f"{i}", metric_desc_filtered) for i in range(len(metric_desc_filtered))]
 
 # Method to plot basic metrics
 def plot_basic_metrics(fig, df, metric):
