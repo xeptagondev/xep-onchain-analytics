@@ -11,6 +11,7 @@ nav = dbc.Nav(
         dbc.NavItem(dbc.NavLink("Home", active='exact', href="/")),
         dbc.NavItem(dbc.NavLink("Analytics", active='partial', href="/analytics")),
         dbc.NavItem(dbc.NavLink("Anomaly Detection", active='exact', href="/anomaly")),
+        dbc.NavItem(dbc.NavLink("Forecasting", active='exact', href = '/forecasting'))
     ]
 )
 

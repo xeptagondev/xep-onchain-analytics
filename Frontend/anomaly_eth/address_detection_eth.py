@@ -31,7 +31,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 # CHANGE TO YOUR DIRECTORY
-os.chdir("C:/Users/Zephyrus G14/Desktop/Capstone Files/xep-onchain-analytics/Frontend")
+os.chdir("xep-onchain-analytics/Frontend")
 
 # Database configurations
 with open("extract/config.json") as config_file:
@@ -86,6 +86,8 @@ df_copy['weekend_flag'] = df_copy['block_timestamp'].apply(lambda x: 1 if x.week
 # Drop "block_timestamp"
 df_copy = df_copy.drop(columns = ['block_timestamp'])
 
+df_copy.to_csv('anomaly_eth/Preprocessed_dataset.csv', index = False)
+
 cat_features = ['hash', 'from_address', 'to_address', 'input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
 num_features = ['nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'receipt_cumulative_gas_used', 'receipt_gas_used', 'block_number', 'year']
 
@@ -101,8 +103,6 @@ for i in df_copy.columns:
 for i in df_copy.columns:
     le.fit(df_copy[i])
     df_copy[i]=le.transform(df_copy[i])
-
-df_copy.to_csv('anomaly_eth/Preprocessed_dataset.csv', index = False)
 
 y = df_copy.pop('is_fraud')
 X = df_copy
@@ -127,17 +127,16 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-lr_model = Pipeline(steps=[('preprocessor', preprocessor),
+logr_model = Pipeline(steps=[('preprocessor', preprocessor),
                                ('classifier', LogisticRegression(solver = 'liblinear', penalty = 'l1'))])
-
-lr_model.fit(X_train, y_train)
-y_train_lr_pred = lr_model.predict(X_train)
+logr_model.fit(X_train, y_train)
+y_train_logr_pred = logr_model.predict(X_train)
 # Training Accuracy
-print("Train Accuracy LogR:", accuracy_score(y_train, y_train_lr_pred))
+print("Train Accuracy LogR:", accuracy_score(y_train, y_train_logr_pred))
 
-y_test_lr_pred = lr_model.predict(X_test)
+y_test_logr_pred = logr_model.predict(X_test)
 # Testing Accuracy
-print("Test Accuracy LogR:", accuracy_score(y_test, y_test_lr_pred))
+print("Test Accuracy LogR:", accuracy_score(y_test, y_test_logr_pred))
 
 # XGB
 params = {'subsample': 0.8, 'reg_lambda': 0.8, 'min_child_weight': 1, 'max_depth': 14, 'learning_rate': 0.03, 'gamma': 1.5, 'colsample_bytree': 0.8}
@@ -215,15 +214,15 @@ y_test_rf_pred = rf_model.predict(X_test)
 print("Test Accuracy RF:", accuracy_score(y_test, y_test_rf_pred))
 
 # Pickle models
-pickle_classifier_string_lr = pickle.dumps(lr_model)
+pickle_classifier_string_logr = pickle.dumps(logr_model)
 pickle_classifier_string_xgb = pickle.dumps(xgb_model)
 pickle_classifier_string_nn = pickle.dumps(nn_model)
 pickle_classifier_string_rf = pickle.dumps(rf_model)
 
 classifier = ["logr", "xgb", "nn", "rf"]
-models = [pickle_classifier_string_lr, pickle_classifier_string_xgb, pickle_classifier_string_nn, pickle_classifier_string_rf]
-y_pred_train_model = [y_train_lr_pred, y_train_xgb_pred, y_train_nn_pred, y_train_rf_pred]
-y_pred_test_model = [y_test_lr_pred, y_test_xgb_pred, y_test_nn_pred, y_test_rf_pred]
+models = [pickle_classifier_string_logr, pickle_classifier_string_xgb, pickle_classifier_string_nn, pickle_classifier_string_rf]
+y_pred_train_model = [y_train_logr_pred, y_train_xgb_pred, y_train_nn_pred, y_train_rf_pred]
+y_pred_test_model = [y_test_logr_pred, y_test_xgb_pred, y_test_nn_pred, y_test_rf_pred]
 
 print(bool(dbConnection)) # <- just to keep track of the process
 df = pd.DataFrame(columns=['class', 'model'])
