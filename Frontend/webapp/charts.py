@@ -135,6 +135,7 @@ content = html.Div([
 
                 dbc.Row([
                 html.Div(id="scale-dropdown", children=[
+                    html.Span("Select your preferred scale.", className='scale-dropdown-text', style = {'font-size':'12px'}),
                     dbc.DropdownMenu(
                         [dbc.DropdownMenuItem(
                             html.Div([
@@ -168,7 +169,7 @@ content = html.Div([
                         color = 'white',
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'height':'35px', 'color':'#bcc4cb', 'font-family': 'Open Sans','border-color':'#bcc4cb'}
                     )
-                ], style = {'display':'block', 'float': 'right', 'width':'100px'}), ], style={'justify-content': 'right', 'padding-bottom':'5px', 'padding-right':'45px'}),
+                ], className='scale-dropdown-div', style = {'display':'block', 'float': 'right', 'width':'100px'}), ], style={'justify-content': 'right', 'padding-bottom':'5px', 'padding-right':'45px'}),
 
                 # area to display selected metric's graph
                 dcc.Loading(
@@ -281,7 +282,7 @@ def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metric, pr
                 side="right",
                 type='log' if price_axis_scale == 'Log' else 'linear'), # to use log scale by default,
     
-    legend=dict(orientation="h", yanchor="top", y=1.3)
+    legend=dict(orientation="h", yanchor="top", y=1.35)
     )
     return fig
 
@@ -319,7 +320,7 @@ def plot_basic_metrics(fig, df, metric, price_axis_scale, metric_axis_scale):
                     side="right",
                     type='log' if price_axis_scale == 'Log' else 'linear'), # to use log scale by default
 
-        legend=dict(orientation="h", yanchor="top", y=1.3)
+        legend=dict(orientation="h", yanchor="top", y=1.35)
         )
 
         return fig
@@ -328,17 +329,17 @@ def plot_basic_metrics(fig, df, metric, price_axis_scale, metric_axis_scale):
 @app.callback(
     Output("analytics-graph", "figure"), # updating figure property of the dcc.Graph compoent to display new data
     Output('graph-test-print-msg', 'children'), # hy added to see which part of update_line_charts is producing the chart -- to delete
-    Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
+    # Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
     Input('my-date-picker-range', 'value'), # dates
     Input('graph-title', 'children'), # curr_metric
-    Input({'type': 'list-group-item', 'index': ALL}, 'id'), # id_list
+    # Input({'type': 'list-group-item', 'index': ALL}, 'id'), # id_list
     Input('yaxis-type', 'value'), # price_axis_scale - linear / log scale for price data
     Input('yaxis-type-2', 'value'), # metric_axis_scale - linear / log scale for metric data
     State('bm-data', 'data'),
     State('cm-data', 'data'),
     State('md-data', 'data'),
 )
-def update_line_chart(n_clicks_list, dates, curr_metric, id_list, price_axis_scale, metric_axis_scale, bm_data, cm_data, md_data):
+def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, bm_data, cm_data, md_data): # n_clicks_list, id_list
     bm_df = pd.DataFrame.from_dict(bm_data)
     cm_df = pd.DataFrame.from_dict(cm_data)
     md_df = pd.DataFrame.from_dict(md_data)
@@ -380,20 +381,20 @@ def update_line_chart(n_clicks_list, dates, curr_metric, id_list, price_axis_sca
         type="date"
     )
     fig = go.Figure()
-    if ctx.triggered_id is None or 1 not in n_clicks_list: # if user did not select any metric, show Price chart by default
-        print_msg = "chart generated as triggered_id is None or 1 not in n_clicks_list"
-        plot_basic_metrics(fig, bm_df, "Price ($)", price_axis_scale, metric_axis_scale)
+    # if ctx.triggered_id is None or 1 not in n_clicks_list: # if user did not select any metric, show Price chart by default
+    #     print_msg = "chart generated as triggered_id is None or 1 not in n_clicks_list"
+    #     plot_basic_metrics(fig, bm_df, "Price ($)", price_axis_scale, metric_axis_scale)
         
-    elif ctx.triggered_id is not None or 1 in n_clicks_list: # if user clicked on a metric
-        clicked = id_list[n_clicks_list.index(1)]['index'] # get metric name of the very first metric that user clicked on 
-        is_computed = md_df[md_df['metric_name'] == clicked]['is_computed'].values[0]
-        if clicked == "Difficulty Ribbon":
-            clicked = "Difficulty"
-        if is_computed: # if selected metric is a computed one
-            plot_computed_metrics(fig, cm_df, bm_df, clicked, price_axis_scale, metric_axis_scale)
-        else: # selected metric is not a computed one - basic metric
-            print_msg = "chart generated as this is the first metric user clicked on && user selected BASIC metric"
-            plot_basic_metrics(fig, bm_df, clicked, price_axis_scale, metric_axis_scale)
+    # elif ctx.triggered_id is not None or 1 in n_clicks_list: # if user clicked on a metric
+    #     clicked = id_list[n_clicks_list.index(1)]['index'] # get metric name of the very first metric that user clicked on 
+    #     is_computed = md_df[md_df['metric_name'] == clicked]['is_computed'].values[0]
+    #     if clicked == "Difficulty Ribbon":
+    #         clicked = "Difficulty"
+    #     if is_computed: # if selected metric is a computed one
+    #         plot_computed_metrics(fig, cm_df, bm_df, clicked, price_axis_scale, metric_axis_scale)
+    #     else: # selected metric is not a computed one - basic metric
+    #         print_msg = "chart generated as this is the first metric user clicked on && user selected BASIC metric"
+    #         plot_basic_metrics(fig, bm_df, clicked, price_axis_scale, metric_axis_scale)
 
     # Update graph based on date range selected by user
     if start is not None and end is not None:

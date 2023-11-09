@@ -17,18 +17,25 @@ psqlconn = psycopg2.connect(database = config['postgre']['database'],
 
 psqlcursor = psqlconn.cursor()
 
-basic_metrics = pd.read_sql("SELECT * FROM basic_metrics", psqlconn)
-computed_metrics = pd.read_sql("SELECT * FROM computed_metrics", psqlconn)
+cryptocurrencies = ['Bitcoin', 'Ethereum']
+crypto_suffix = {'Bitcoin': '', 'Ethereum': '_ethereum'}
 
-bm_eth = pd.read_sql("SELECT * FROM basic_metrics_ethereum", psqlconn)
-cm_eth = pd.read_sql("SELECT * FROM computed_metrics_ethereum", psqlconn)
+bm_dict = {}
+cm_dict = {}
+md_dict = {}
 
-metrics_desc = pd.read_csv("assets/metrics_desc.csv")
-md_eth = pd.read_csv("assets/metrics_desc_eth.csv")
+for crypto in cryptocurrencies:
+    basic_metrics_name = 'basic_metrics' + crypto_suffix[crypto]
+    computed_metrics_name = 'computed_metrics' + crypto_suffix[crypto]
 
-bm_dict = {'Bitcoin': basic_metrics, 'Ethereum': bm_eth}
-cm_dict = {'Bitcoin': computed_metrics, 'Ethereum': cm_eth}
-md_dict = {'Bitcoin': metrics_desc, 'Ethereum': md_eth}
+    basic_metrics_df = pd.read_sql(f"SELECT * FROM {basic_metrics_name}", psqlconn)
+    computed_metrics_df = pd.read_sql(f"SELECT * FROM {computed_metrics_name}", psqlconn)
+    metrics_desc_df = pd.read_excel("assets/metrics_desc.xlsx", sheet_name=crypto)
+
+    bm_dict[crypto] = basic_metrics_df
+    cm_dict[crypto] = computed_metrics_df
+    md_dict[crypto] = metrics_desc_df
+
 
 def get_bm_dict():
     return bm_dict

@@ -95,6 +95,38 @@
     border-color: black transparent transparent transparent;
 }
 
+/* create hover tooltip on top of scale dropdown */
+.scale-dropdown-div .scale-dropdown-text {  
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 3px 5px 3px;
+    /* positioning tooltip at top */
+    position: absolute;
+    z-index: 1;
+    width: 100px;
+    margin-left: 10px;  
+    margin-top: -64px;
+} 
+
+.scale-dropdown-div:hover .scale-dropdown-text {  
+    visibility: visible;  
+}
+
+/* arrow for tooltip of scale dropdown */  
+.scale-dropdown-div .scale-dropdown-text::after {
+    content: " ";
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
 .list-group-item-action:hover {
     color: #336291c0;
 }
