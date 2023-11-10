@@ -38,7 +38,7 @@ df_isoForest = pd.read_sql('SELECT * FROM "isoForest_outliers"', psqlconn)
 df_autoEncoder = pd.read_sql('SELECT * FROM "autoEncoder_outliers"', psqlconn)
 df_kmeans = pd.read_sql('SELECT * FROM "kmeans_outliers"', psqlconn)
 df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
-df_illicit_results = pd.read_sql('SELECT * FROM "anomaly_results"', psqlconn)
+df_illicit_results = pd.read_sql('SELECT distinct * FROM "anomaly_results"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
@@ -149,10 +149,10 @@ def update_menu(selected_cryptocurrency):
                         dbc.Accordion(
                         dbc.AccordionItem(
                             dbc.ListGroup([
-                                dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00')
+                                dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
                             ], flush=True, style={'font-size': '14px'}),
                             
                             title="Address Detection"
@@ -166,9 +166,9 @@ def update_menu(selected_cryptocurrency):
                     dbc.Accordion(
                         dbc.AccordionItem(
                             dbc.ListGroup([
-                                dbc.ListGroupItem("Decision Tree", action=True, id={'type': 'anomaly-dtc', 'index': 'myindex'}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("K-Nearest Neighbours", action=True, id={'type':'anomaly-knn', 'index': 'myindex'}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("XGBoost", action=True, id={'type':'anomaly-xgboost', 'index': 'myindex'}, color='#E8EBEE00')
+                                dbc.ListGroupItem("Decision Tree", action=True, id={'type': 'anomaly-dtc', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("K-Nearest Neighbours", action=True, id={'type':'anomaly-knn', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("XGBoost", action=True, id={'type':'anomaly-xgboost', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'})
                             ], flush=True, style={'font-size':'14px'}),
                             
                             title="Address Detection"
@@ -178,9 +178,9 @@ def update_menu(selected_cryptocurrency):
                     dbc.Accordion(
                         dbc.AccordionItem(
                             dbc.ListGroup([
-                                dbc.ListGroupItem("Isolation Forest", action=True, id={'type':'outlier-isoForest', 'index': 'myindex'}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("Auto-Encoders", action=True, id={'type':'outlier-autoEncoder', 'index': 'myindex'}, color='#E8EBEE00'),
-                                dbc.ListGroupItem("K-Means Clustering", action=True, id={'type':'outlier-kmeans', 'index': 'myindex'}, color='#E8EBEE00')
+                                dbc.ListGroupItem("Isolation Forest", action=True, id={'type':'outlier-isoForest', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("Auto-Encoders", action=True, id={'type':'outlier-autoEncoder', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                                dbc.ListGroupItem("K-Means Clustering", action=True, id={'type':'outlier-kmeans', 'index': 'myindex'}, color='#E8EBEE00', style={'cursor': 'pointer'})
                             ], flush=True, style={'font-size':'14px'}),
                             
                             title="Outlier Detection"
@@ -282,16 +282,16 @@ def create_cluster(df, model):
 
 def create_table(df, model):
     tables = []
-    model_name = model.split("_")[1]
+    model_name = str(model.split("_")[1])
     
     if model.split("_")[-1] != "eth":
         tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
         tables.append(dash_table.DataTable(
             columns = [
-                {'name': 'Accuracy', 'id': 'test_acc', 'type':'string'},
-                {'name': 'Precision', 'id': 'test_precision', 'type':'string'},
-                {'name': 'Recall', 'id': 'test_recall', 'type':'string'},
-                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'string'}
+                {'name': 'Accuracy', 'id': 'test_acc', 'type':'text'},
+                {'name': 'Precision', 'id': 'test_precision', 'type':'text'},
+                {'name': 'Recall', 'id': 'test_recall', 'type':'text'},
+                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'text'}
             ],
             data = df_illicit_results.loc[df_illicit_results['class'] == model_name].to_dict('records'),
             style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
@@ -347,10 +347,10 @@ def create_table(df, model):
         tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
         tables.append(dash_table.DataTable(
             columns = [
-                {'name': 'Accuracy', 'id': 'test_acc', 'type':'string'},
-                {'name': 'Precision', 'id': 'test_precision', 'type':'string'},
-                {'name': 'Recall', 'id': 'test_recall', 'type':'string'},
-                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'string'}
+                {'name': 'Accuracy', 'id': 'test_acc', 'type':'text'},
+                {'name': 'Precision', 'id': 'test_precision', 'type':'text'},
+                {'name': 'Recall', 'id': 'test_recall', 'type':'text'},
+                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'text'}
             ],
             data = df_eth_fraud_results.loc[df_eth_fraud_results['class'] == model_name].to_dict('records'),
             style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},

@@ -29,9 +29,9 @@ content = html.Div([
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
                     dbc.DropdownMenu(
-                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id = "Bitcoin-2"),
+                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id = "Bitcoin-2", href = '/anomaly/models'),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-2"),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-2", href = '/anomaly/models'),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
@@ -44,14 +44,14 @@ content = html.Div([
                         align_end = True,
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
                     )
-                ], style={'text-align':'center', 'padding-bottom':'15px'}),
+                ], style={'text-align':'center', 'padding-bottom':'15px'})
                 
-                # Detection type
-                dbc.Button("View the Anomaly Detection Models here", id = 'visit-models', href='/anomaly/models',
-                       style= {'background-color': '#0a275c', 'color':'white', 'text-transform':'none', 'font-weight': 900, 'border-radius':'15px', 'margin-top':'30px'})
+                # # Detection type
+                # , dbc.Button("View Anomaly Detection Models", id = 'visit-models', href='/anomaly/models',
+                #        style= {'background-color': '#0a275c', 'color':'white', 'text-transform':'none', 'font-weight': 900, 'border-radius':'15px', 'margin-top':'30px'})
 
 
-            ], width = 3, style = {'background-color':'#E8EBEE99',  'border-right':'2px solid grey', 'padding-top': '20px', 'text-align':'center'}),
+            ], width = 3, style = {'background-color':'#E8EBEE99',  'border-right':'2px solid grey', 'padding-top': '20px', 'text-align':'center', 'horizontalAlign': 'middle'}),
 
             # Table / Graph display segment
             dbc.Col([
@@ -84,7 +84,7 @@ def create_anomaly():
     return layout
 
 
-################## Callbacks ##############################
+############################## Callbacks ##############################
 
 # Update dropdown label
 @app.callback(
@@ -97,6 +97,7 @@ def update_dropdown(n1, n2, n3):
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Bitcoin (BTC)"
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
     return label_id[button_id]
 
 # Update overview

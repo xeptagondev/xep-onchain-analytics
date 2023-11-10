@@ -28,7 +28,7 @@ def display_page(pathname):
         return create_charts_ethereum()
     if pathname == '/anomaly':
         return create_anomaly()
-    if pathname == "/anomaly/models":
+    if pathname == '/anomaly/models':
         return create_anomaly_models()
     if pathname == "/forecasting":
         return create_forecasting()
@@ -37,4 +37,4 @@ def display_page(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
