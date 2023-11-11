@@ -146,7 +146,7 @@ content = html.Div([
                                         {"value": "Linear", "label": "Linear"},
                                     ],
                                     color = "teal"
-                            )], style = {'display':'flex', 'flex-direction':'column', 'align-items': 'center', 'justify-content': 'center'}), toggle=False),
+                            )], style = {'display':'flex', 'flex-direction':'column', 'align-items': 'center', 'justify-content': 'center'}), id='price-scale',toggle=False),
                          dbc.DropdownMenuItem(divider=True),
                          dbc.DropdownMenuItem(
                             html.Div([
@@ -160,8 +160,9 @@ content = html.Div([
                                         {"value": "Linear", "label": "Linear"},
                                     ],
                                     color = "teal"
-                            )], style = {'display':'flex', 'flex-direction':'column', 'align-items': 'center', 'justify-content': 'center'}), toggle=False)],
-                        id = 'test-drop',
+                            )], style = {'display':'flex', 'flex-direction':'column', 'align-items': 'center', 'justify-content': 'center'}), 
+                            id='metric-scale',toggle=False)],
+                        id = 'scale-select',
                         label = 'Select Scale',
                         color = 'white',
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'height':'35px', 'color':'#bcc4cb', 'font-family': 'Open Sans','border-color':'#bcc4cb'}
@@ -287,7 +288,7 @@ def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metric, pr
 def plot_basic_metrics(fig, df, metric, price_axis_scale, metric_axis_scale):
     if metric == "Price ($)":
         fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3")))
-        fig.update_yaxes(title_text = metric)
+        fig.update_yaxes(title_text = metric, type='linear' if metric_axis_scale == 'Linear' else 'log')
 
     else:
         if (metric == "Difficulty"):
@@ -428,18 +429,19 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
     return fig
 
 # Hide scale dropdown when price is selected
-def update_scale_dropdown(metric):
+def disable_item(metric):
     if metric == "Price ($)":
-        return {'display': 'none'}
+        return True
     else:
-        return {'display':'block', 'float': 'right', 'width':'100px'}
+        return False
 
 # Update graph title and description
 @app.callback(
     Output('graph-title', 'children'),
     Output('metric-desc', "children"),
     Output('metric-formula', 'children'),
-    Output("scale-dropdown", "style"),
+    Output('price-scale', 'disabled'),
+    Output('yaxis-type', 'disabled'),
     Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
     State('md-data', 'data')
 )
@@ -447,9 +449,9 @@ def update_title_desc(n_clicks_list, md_data):
     md_df = pd.DataFrame.from_dict(md_data)
 
     if not ctx.triggered or not any(x is not None for x in n_clicks_list): # no user selection yet
-        return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula'], update_scale_dropdown("Price ($)") # return price by default
+        return "Price ($)", md_df[md_df['metric_name'] == 'Price ($)']['description'], md_df[md_df['metric_name'] == 'Price ($)']['formula'], disable_item("Price ($)"), disable_item("Price ($)") # return price by default
     clicked_id = ctx.triggered_id.index # metric name that was clicked
-    return clicked_id, md_df[md_df['metric_name'] == clicked_id]['description'], md_df[md_df['metric_name'] == clicked_id]['formula'], update_scale_dropdown(clicked_id)
+    return clicked_id, md_df[md_df['metric_name'] == clicked_id]['description'], md_df[md_df['metric_name'] == clicked_id]['formula'], disable_item(clicked_id), disable_item(clicked_id)
 
 # Toggling metric's formula to be shown or not
 @app.callback(
