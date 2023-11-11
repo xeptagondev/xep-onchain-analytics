@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 
+
 def get_query(cryptocurrency):
     queries = {
         "bitcoin": """
@@ -35,27 +36,25 @@ def get_query(cryptocurrency):
                 ATF.Time == TC.Time AND
                 ATF.Time == TVBTC.Time AND
                 ATF.Time == TVUSD.Time
-                """, 
+                """,
         "ethereum": """
             CREATE OR REPLACE TABLE basic_metrics_ethereum AS
             SELECT 
                 CS.Time AS Date,
-                CS."runningsum(Generated value – Blocks (ETH)) – Ethereum" AS 'Circulating Supply',
+                CS."runningsum(Generated value – Blocks (ETH)) – Ethereum"/1000000000000000000 AS 'Circulating Supply',
                 P."Price (ETH/USD) – Ethereum" AS 'Price ($)',
-                TC."sum(Transaction count – Blocks) – Ethereum" AS 'Transaction Count',
                 ATF."avg(Fee – Transactions (USD)) – Ethereum" AS 'Average Transaction Fee (USD)',
                 ATV."avg(Value total – Blocks (USD)) – Ethereum" AS 'Average Transaction Value (USD)',
                 TV."sum(Value total – Blocks (USD)) – Ethereum" AS 'Transaction Volume (USD)',
                 ABS."avg(Block size (kB)) – Ethereum" AS 'Average Block Size',
                 ABI."f(number(86400)/count()) – Ethereum" AS 'Average Block Interval (s)',
-                AGP."avg(Gas price) – Ethereum" AS 'Average Gas Price (Gwei)',
+                AGP."avg(Gas price) – Ethereum"/1000000000 AS 'Average Gas Price (Gwei)',
                 AGU."avg(Gas used – Blocks (Gwei)) – Ethereum" AS 'Average Gas Used (Gwei)',
                 AGL."avg(Gas limit – Blocks) – Ethereum" AS 'Average Gas Limit',
                 NNC."Transactions count – Ethereum" AS 'Number of New Contracts',
                 ERCT."ERC-20 transactions count – Ethereum" AS 'ERC-20 Transfers',
             FROM read_parquet('circulation.parquet') CS
             LEFT JOIN read_parquet('price.parquet') P ON CS.Time = P.Time
-            LEFT JOIN read_parquet('transaction-count.parquet') TC ON CS.Time = TC.Time
             LEFT JOIN read_parquet('average-transaction-fee-usd.parquet') ATF ON CS.Time = ATF.Time
             LEFT JOIN read_parquet('average-transaction-amount-usd.parquet') ATV ON CS.Time = ATV.Time
             LEFT JOIN read_parquet('transaction-volume-usd.parquet') TV ON CS.Time = TV.Time
@@ -83,14 +82,14 @@ def load_basic_metrics(conn, config):
         query = get_query(crypto)
         print(query)
         conn.execute(query)
-        # print(conn.execute("SELECT * FROM basic_metrics_ethereum").fetchdf())
+        print(conn.execute("SELECT * FROM basic_metrics_ethereum").fetchdf())
         os.chdir('../')
         os.chdir('../')
         print(f"dir aft done with one crypto: {os.getcwd()}")
 
     # query = """
     #     CREATE OR REPLACE TABLE basic_metrics AS
-    #     SELECT 
+    #     SELECT
     #         ATF.Time AS Date,
     #         ATF."avg(Fee total – Blocks (USD)) – Bitcoin" AS 'Cost Per Transaction',
     #         ATV."avg(Output total – Blocks (USD)) – Bitcoin" AS 'Average Transaction Value (ATV)',
@@ -101,7 +100,7 @@ def load_basic_metrics(conn, config):
     #         TC."sum(Transaction count – Blocks) – Bitcoin" AS 'Transaction Count',
     #         TVBTC."sum(Output total – Blocks (BTC)) – Bitcoin"/100000000 AS 'Transaction Volume (BTC)',
     #         TVUSD."sum(Output total – Blocks (USD)) – Bitcoin" AS 'Transaction Volume (USD)'
-    #     FROM 
+    #     FROM
     #         read_parquet('average_transaction_fee.parquet') ATF,
     #         read_parquet('average_transaction_value.parquet') ATV,
     #         read_parquet('cdd.parquet') CDD,
@@ -113,13 +112,11 @@ def load_basic_metrics(conn, config):
     #         read_parquet('transaction_volume_usd.parquet') TVUSD
     #     WHERE
     #         ATF.Time == ATV.Time AND
-    #         ATF.Time == CDD.Time AND 
+    #         ATF.Time == CDD.Time AND
     #         ATF.Time == CS.Time AND
-    #         ATF.Time == D.Time AND 
+    #         ATF.Time == D.Time AND
     #         ATF.Time == P.Time AND
     #         ATF.Time == TC.Time AND
     #         ATF.Time == TVBTC.Time AND
     #         ATF.Time == TVUSD.Time
     #         """
-
-    

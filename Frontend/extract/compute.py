@@ -1,10 +1,11 @@
-# This file has to code required to calculate and consolidate the computed metrics 
+# This file has to code required to calculate and consolidate the computed metrics
 
 import pandas as pd
 from datetime import timedelta, datetime
 from datetime import date
 import pyarrow.parquet as pq
 import os
+
 
 def compute(start_date, end_date, conn):
     os.chdir('bitcoin')
@@ -36,7 +37,8 @@ def compute(start_date, end_date, conn):
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
         day = datetime.combine(day, datetime.min.time())
-        filename = "'xep-onchain-analytics/data/inputs/blockchair_bitcoin_inputs_" + day.strftime('%Y%m%d') + ".parquet'"
+        filename = "'xep-onchain-analytics/data/inputs/blockchair_bitcoin_inputs_" + \
+            day.strftime('%Y%m%d') + ".parquet'"
         calculate_sopr = "SELECT sum(spending_value_usd) / sum(value_usd) FROM " + filename
         sopr_value = conn.execute(calculate_sopr).fetchone()
         conn.execute('INSERT INTO sopr VALUES (?, ?)', [day, sopr_value[0]])
@@ -147,10 +149,11 @@ def compute(start_date, end_date, conn):
         AND c.Date = b.Date
         AND p.Date = b.Date
     """
-    ## check if table exists
+    # check if table exists
 
-    table_bool = conn.execute("""select count(*) from information_schema.tables where table_name = 'computed_metrics'""")
-    
+    table_bool = conn.execute(
+        """select count(*) from information_schema.tables where table_name = 'computed_metrics'""")
+
     if table_bool.fetchone()[0] == 1:
         conn.execute(insert_row)
     else:
@@ -159,6 +162,7 @@ def compute(start_date, end_date, conn):
     # conn.execute(create_computed_metrics_table)
 
     # print(conn.execute("select * from computed_metrics").fetchdf())
+
 
 def compute_eth(start_date, end_date, conn):
     print(f"curr working dir: {os.getcwd()}")
@@ -197,11 +201,14 @@ def compute_eth(start_date, end_date, conn):
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
         day = datetime.combine(day, datetime.min.time())
-        filename = "'blocks/blockchair_ethereum_blocks_" + day.strftime('%Y%m%d') + ".parquet'"
-        calculate_blocks_mined = "SELECT max(id) - min(id) + 1 FROM " + filename
+        filename = "'blocks/blockchair_ethereum_blocks_" + \
+            day.strftime('%Y%m%d') + ".parquet'"
+        calculate_blocks_mined = "SELECT max(id) - min(id) + 1 FROM " + \
+            filename
         blocks_mined_value = conn.execute(calculate_blocks_mined).fetchone()
         print([day, blocks_mined_value[0]])
-        conn.execute('INSERT INTO blocks_mined VALUES (?, ?)', [day, blocks_mined_value[0]])
+        conn.execute('INSERT INTO blocks_mined VALUES (?, ?)',
+                     [day, blocks_mined_value[0]])
 
     # Number of large transactions (at least $100,000)
     create_num_large_t_table = '''
@@ -220,11 +227,14 @@ def compute_eth(start_date, end_date, conn):
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
         day = datetime.combine(day, datetime.min.time())
-        filename = "'transactions/blockchair_ethereum_transactions_" + day.strftime('%Y%m%d') + ".parquet'"
+        filename = "'transactions/blockchair_ethereum_transactions_" + \
+            day.strftime('%Y%m%d') + ".parquet'"
         calculate_num_large_t = "SELECT COUNT(CASE WHEN value_usd >= 0 AND value_usd < 1 THEN hash END), COUNT(CASE WHEN value_usd >= 1 AND value_usd < 10 THEN hash END), COUNT(CASE WHEN value_usd >= 10 AND value_usd < 100 THEN hash END), COUNT(CASE WHEN value_usd >= 100 AND value_usd < 1000 THEN hash END), COUNT(CASE WHEN value_usd >= 1000 AND value_usd < 10000 THEN hash END), COUNT(CASE WHEN value_usd >= 10000 AND value_usd < 100000 THEN hash END), COUNT(CASE WHEN value_usd >= 100000 THEN hash END), COUNT(hash) FROM " + filename + " WHERE type != 'synthetic_coinbase'"
         num_large_t_value = conn.execute(calculate_num_large_t).fetchone()
-        print([day, num_large_t_value[0], num_large_t_value[1], num_large_t_value[2], num_large_t_value[3], num_large_t_value[4], num_large_t_value[5], num_large_t_value[6], num_large_t_value[7]])
-        conn.execute('INSERT INTO num_large_t VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [day, num_large_t_value[0], num_large_t_value[1], num_large_t_value[2], num_large_t_value[3], num_large_t_value[4], num_large_t_value[5], num_large_t_value[6], num_large_t_value[7]])
+        print([day, num_large_t_value[0], num_large_t_value[1], num_large_t_value[2], num_large_t_value[3],
+              num_large_t_value[4], num_large_t_value[5], num_large_t_value[6], num_large_t_value[7]])
+        conn.execute('INSERT INTO num_large_t VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+                     day, num_large_t_value[0], num_large_t_value[1], num_large_t_value[2], num_large_t_value[3], num_large_t_value[4], num_large_t_value[5], num_large_t_value[6], num_large_t_value[7]])
 
     # Active Addresses, Active Sending Addresses, Active Receiving Addresses
     create_active_addresses_table = '''
@@ -236,21 +246,26 @@ def compute_eth(start_date, end_date, conn):
         day = start_date + timedelta(days=i)
         day = datetime.combine(day, datetime.min.time())
         print(f"getting address data for {day}")
-        filename = "transactions/blockchair_ethereum_transactions_" + day.strftime('%Y%m%d') + ".parquet"
+        filename = "transactions/blockchair_ethereum_transactions_" + \
+            day.strftime('%Y%m%d') + ".parquet"
         print(filename)
         transactions_df = pq.read_table(filename).to_pandas()
         # print(transactions_df)
-        transactions_df = transactions_df[~transactions_df['type'].isin(['synthetic_coinbase'])][['index', 'type', 'sender', 'recipient']]
-        all_unique_transactions_df = pd.concat([transactions_df['sender'],transactions_df['recipient']]).unique()
+        transactions_df = transactions_df[~transactions_df['type'].isin(
+            ['synthetic_coinbase'])][['index', 'type', 'sender', 'recipient']]
+        all_unique_transactions_df = pd.concat(
+            [transactions_df['sender'], transactions_df['recipient']]).unique()
         total_active_addresses = len(all_unique_transactions_df)
 
         # Active Sending Addresses
         unique_sending_transactions_df = transactions_df['sender'].unique()
         total_active_sending_addresses = len(unique_sending_transactions_df)
-        
+
         # Active Receiving Addresses
-        unique_receiving_transactions_df = transactions_df['recipient'].unique()
-        total_active_receiving_addresses = len(unique_receiving_transactions_df)
+        unique_receiving_transactions_df = transactions_df['recipient'].unique(
+        )
+        total_active_receiving_addresses = len(
+            unique_receiving_transactions_df)
 
         print("day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses:")
         print(day)
@@ -258,7 +273,8 @@ def compute_eth(start_date, end_date, conn):
         print(total_active_sending_addresses)
         print(total_active_receiving_addresses)
         # print([day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses]+'\n')
-        conn.execute('INSERT INTO active_addresses VALUES (?, ?, ?, ?)', [day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses])
+        conn.execute('INSERT INTO active_addresses VALUES (?, ?, ?, ?)', [
+                     day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses])
 
     create_computed_metrics_table = '''
         CREATE OR REPLACE TABLE computed_metrics_ethereum AS 
@@ -288,8 +304,8 @@ def compute_eth(start_date, end_date, conn):
     '''
 
     # insert_row = """
-    #     INSERT INTO computed_metrics_ethereum  
-    #     SELECT b.Date, 
+    #     INSERT INTO computed_metrics_ethereum
+    #     SELECT b.Date,
     #     "Market Capitalisation",
     #     "Network Value to Transaction (NVT)",
     #     "Velocity",
@@ -315,7 +331,7 @@ def compute_eth(start_date, end_date, conn):
     # """
 
     # table_bool = conn.execute("""select count(*) from information_schema.tables where table_name = 'computed_metrics_ethereum'""")
-    
+
     # if table_bool.fetchone()[0] == 1:
     #     print('inserting row')
     #     conn.execute(insert_row)

@@ -5,5 +5,4 @@
 !.elasticbeanstalk/*.global.yml
 
 # Config file
-extract/config.json
 webapp/config.json

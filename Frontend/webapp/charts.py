@@ -124,9 +124,6 @@ content = html.Div([
                     ), style = {'padding-top': '15px', 'padding-bottom':'15px'}
                 ),
 
-                # hy test graph output print msg - to delete
-                html.Div(id='graph-test-print-msg'),
-
                 # area for metric description
                 html.Div([
                     html.P("Metric Description", style={'font-weight':'bold', 'textDecoration':'underline'}),
@@ -290,7 +287,7 @@ def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metric, pr
 def plot_basic_metrics(fig, df, metric, price_axis_scale, metric_axis_scale):
     if metric == "Price ($)":
         fig.add_trace(go.Scatter(x=df['Date'], y=df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3")))
-        fig.update_yaxes(title_text = metric, type='log' if price_axis_scale == 'Log' else 'linear')
+        fig.update_yaxes(title_text = metric)
 
     else:
         if (metric == "Difficulty"):
@@ -328,7 +325,6 @@ def plot_basic_metrics(fig, df, metric, price_axis_scale, metric_axis_scale):
 # Update line graph data
 @app.callback(
     Output("analytics-graph", "figure"), # updating figure property of the dcc.Graph compoent to display new data
-    Output('graph-test-print-msg', 'children'), # hy added to see which part of update_line_charts is producing the chart -- to delete
     # Input({'type': 'list-group-item', 'index': ALL}, 'n_clicks'), # n_clicks_list
     Input('my-date-picker-range', 'value'), # dates
     Input('graph-title', 'children'), # curr_metric
@@ -349,8 +345,6 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
         end = None
     else:
         start, end = dates
-
-    print_msg = html.Div("testing first ah") # initialising value
 
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
@@ -382,7 +376,6 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
     )
     fig = go.Figure()
     # if ctx.triggered_id is None or 1 not in n_clicks_list: # if user did not select any metric, show Price chart by default
-    #     print_msg = "chart generated as triggered_id is None or 1 not in n_clicks_list"
     #     plot_basic_metrics(fig, bm_df, "Price ($)", price_axis_scale, metric_axis_scale)
         
     # elif ctx.triggered_id is not None or 1 in n_clicks_list: # if user clicked on a metric
@@ -393,7 +386,6 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
     #     if is_computed: # if selected metric is a computed one
     #         plot_computed_metrics(fig, cm_df, bm_df, clicked, price_axis_scale, metric_axis_scale)
     #     else: # selected metric is not a computed one - basic metric
-    #         print_msg = "chart generated as this is the first metric user clicked on && user selected BASIC metric"
     #         plot_basic_metrics(fig, bm_df, clicked, price_axis_scale, metric_axis_scale)
 
     # Update graph based on date range selected by user
@@ -402,12 +394,10 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
         if curr_metric == "Difficulty Ribbon":
             curr_metric = "Difficulty"
         if is_computed: # computed metric
-            print_msg = "chart generated as start is Not None and end is not None && user selected COMPUTED metric"
             filtered_df = cm_df[cm_df['Date'].between(start, end)]
             fig = go.Figure()
             plot_computed_metrics(fig, filtered_df, bm_df, curr_metric, price_axis_scale, metric_axis_scale) # bm_df is for price data
         else: # basic metrics
-            print_msg = "chart generated as start is Not None and end is not None && user selected BASIC metric"
             filtered_df = bm_df[bm_df['Date'].between(start, end)]
             fig = go.Figure()
             plot_basic_metrics(fig, filtered_df, curr_metric, price_axis_scale, metric_axis_scale)
@@ -422,11 +412,9 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
         if curr_metric == "Difficulty Ribbon":
             curr_metric = "Difficulty"
         if is_computed: # computed metric
-            print_msg = "chart generated from where date filter is empty (start & end is None) && selected metric is a COMPUTED metric"
             fig = go.Figure()
             plot_computed_metrics(fig, cm_df, bm_df, curr_metric, price_axis_scale, metric_axis_scale)
         else: # basic metric
-            print_msg = "chart generated from where date filter is empty (start & end is None) && selected metric is a BASIC metric"
             fig = go.Figure()
             plot_basic_metrics(fig, bm_df, curr_metric, price_axis_scale, metric_axis_scale)
         fig.update_layout(
@@ -437,7 +425,7 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
     fig.update_layout(plot_bgcolor='white', hovermode='x unified', hoverlabel = dict(namelength = -1))
     fig.update_xaxes(rangeselector_font_size = 15)
     
-    return fig, print_msg
+    return fig
 
 # Hide scale dropdown when price is selected
 def update_scale_dropdown(metric):
