@@ -28,19 +28,19 @@ content = html.Div([
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
                     dbc.DropdownMenu(
-                        [dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-4"),
+                        [dbc.DropdownMenuItem("Ethereum (ETH)", id="Ethereum-5"),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
-                            dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-4", disabled=True),
+                            dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-5", disabled=True),
                         ], className='disabled-coin'),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
-                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether-4", disabled=True),
+                            dbc.DropdownMenuItem("Tether (USDT)", id="Tether-5", disabled=True),
                         ], className='disabled-coin-2'),
                         ],
-                        id = 'cryptocurrency-select-4',
+                        id = 'cryptocurrency-select-5',
                         label = 'Ethereum (ETH)',
                         color = '#0d1e26',
                         toggle_style = {'text-align':'center', 'font-size':'13px', 'width':'160px', 'height':'35px', 'color':'white', 'font-family': 'Open Sans'}
@@ -135,12 +135,12 @@ def create_forecasting():
 ################## Callbacks ##############################
 # Update dropdown label
 @app.callback(
-    Output('cryptocurrency-select-4', "label"),
-    [Input("Bitcoin-4", "n_clicks"), Input("Ethereum-4", "n_clicks"), Input("Tether-4", "n_clicks")]
+    Output('cryptocurrency-select-5', "label"),
+    [Input("Bitcoin-5", "n_clicks"), Input("Ethereum-5", "n_clicks"), Input("Tether-5", "n_clicks")]
 )
 
 def update_dropdown(n1, n2, n3):
-    label_id = {"Bitcoin-4": "Bitcoin (BTC)", "Ethereum-4": "Ethereum (ETH)", "Tether-4": "Tether (USDT)"}
+    label_id = {"Bitcoin-5": "Bitcoin (BTC)", "Ethereum-5": "Ethereum (ETH)", "Tether-5": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Ethereum (ETH)"
     button_id = ctx.triggered[0]["prop_id"].split(".")[0]

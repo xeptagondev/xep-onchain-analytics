@@ -29,12 +29,12 @@ content = html.Div([
                 dbc.Row([
                     html.P(" Select Cryptocurrency", className = 'bi bi-coin', style={'color':'black', 'text-align':'center', 'font-size':'15px', 'font-family':'Open Sans', 'font-weight':'bold'}),
                     dbc.DropdownMenu(
-                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id = "Bitcoin-2", href = '/anomaly/models'),
+                        [dbc.DropdownMenuItem("Bitcoin (BTC)", id = "Bitcoin-2"),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-2", href = '/anomaly/models'),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-2"),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
-                            html.Span("to be implemented in future", className='disabled-info'),
+                            html.Span("To be implemented in the future", className='disabled-info'),
                             dbc.DropdownMenuItem("Tether (USDT)", id="Tether-2", disabled=True),
                         ], className='disabled-coin-2'),
                         ],
@@ -108,6 +108,11 @@ def update_dropdown(n1, n2, n3):
 )
 
 def update_overview(n1, n2):
+
+    overview = """
+        Select the relevant token to explore our anomaly detection methods.
+    """
+
     ov_btc = """
         Due to the nature of a Blockchain network, cryptocurrencies are becoming the preferred option 
         for cybercriminal activities. Criminals are turning towards cryptocurrency as it is anonymous, 
@@ -125,12 +130,12 @@ def update_overview(n1, n2):
         relationships required between parties, and its ability to facilitate seamless international transactions. As the 
         number of cybercriminal activities continues to rise, network members are eager to detect these criminals promptly 
         in order to protect the network's community and its integrity. In financial networks, illegal activities and thieves 
-        often exhibit unusual patterns, so we intend to implement an anomaly detection framework that seeks to identify those 
-        responsible for illicit transactions and pinpoint unusual behavior within the network.
+        often exhibit unusual patterns, so we intend to implement an fraud detection framework that seeks to identify those 
+        responsible for illicit transactions and pinpoint potential fraud behavior within the network.
     """
 
     address_btc = """
-        The dataset is an input graph collected from Blockahir's bitcoin blockchain. A row in the dataset 
+        The dataset is an input graph collected from Blockchair's bitcoin blockchain. A row in the dataset 
         represents an input along with its transactions data which is joined by its transaction hash. 
         Each node has 27 features used along with its hash which contains the transactions hash and its account 
         which contains the address of the recipient. Each input is marked as illicit if the recipient has 
@@ -156,20 +161,28 @@ def update_overview(n1, n2):
         In this scenario, we used a combination of metrices such as Transaction Volume, Transaction Count etc as features for our 
         outlier detection models.
     """
-
-    selected = ctx.triggered[0]["prop_id"].split(".")[0]
     
-    if selected == "Bitcoin-2" or not ctx.triggered:
+    selected = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    if selected == "Bitcoin-2":
         card = []
+        card.append(html.Div([dbc.Button('Bitcoin Anomaly Detection', id='to-anomaly-detection-btc', color='dark', outline=True, href = '/anomaly/models')], style={'padding-bottom':'5%'}))
         card.append(html.Div([html.P("Background of Anomaly Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov_btc)]))
         card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address_btc)]))
         card.append(html.Div([html.P("Outlier Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(outlier_btc)]))
+        #dbc.Button(id='toast-toggle', n_clicks=0, className="bi bi-question-circle rounded-circle", color='white', style={'display': 'inline-block', 'vertical-align': 'middle', 'margin': '10px 0'}),
         return "Overview (Bitcoin)", card
     
     elif selected == "Ethereum-2":
         card = []
-        card.append(html.Div([html.P("Background of Anomaly Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov_eth)]))
+        card.append(html.Div([dbc.Button('Ethereum Fraud Detection', id='to-anomaly-detection-eth', color='dark', outline=True, href = '/anomaly/models/eth')], style={'padding-bottom':'5%'}))
+        card.append(html.Div([html.P("Background of Fraud Detection Framework", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(ov_eth)]))
         card.append(html.Div([html.P("Address Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(address_eth)]))
         return "Overview (Ethereum)", card
+    
+    elif not ctx.triggered:
+        card = []
+        card.append(html.Div([html.P("Anomaly Detection", style={'font-weight':'bold', 'textDecoration':'underline', 'color': '#0a275c'}), html.P(overview)]))
+        return "Overview", card
     
     return None, None

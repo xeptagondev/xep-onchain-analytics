@@ -4,6 +4,7 @@ from home import create_page_home
 from charts import create_charts
 from charts_ethereum import create_charts_ethereum
 from anomaly_models import create_anomaly_models
+from anomaly_models_eth import create_anomaly_models_eth
 from anomaly import create_anomaly
 from forecasting import create_forecasting
 from app import app
@@ -30,6 +31,8 @@ def display_page(pathname):
         return create_anomaly()
     if pathname == '/anomaly/models':
         return create_anomaly_models()
+    if pathname == '/anomaly/models/eth':
+        return create_anomaly_models_eth()
     if pathname == "/forecasting":
         return create_forecasting()
     else:
@@ -37,4 +40,4 @@ def display_page(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

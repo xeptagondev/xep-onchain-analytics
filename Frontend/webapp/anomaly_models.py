@@ -42,8 +42,8 @@ df_illicit_results = pd.read_sql('SELECT distinct * FROM "anomaly_results"', psq
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
-df_eth_fraud = pd.read_sql('SELECT * FROM "anomaly_predictions_eth"', psqlconn)
-df_eth_fraud_results = pd.read_sql('SELECT * FROM "anomaly_results_eth"', psqlconn)
+df_eth_fraud = pd.read_sql('SELECT DISTINCT * FROM "anomaly_predictions_eth"', psqlconn)
+df_eth_fraud_results = pd.read_sql('SELECT DISTINCT * FROM "anomaly_results_eth"', psqlconn)
 
 df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 
                    'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 
@@ -71,7 +71,7 @@ content = html.Div([
                     dbc.DropdownMenu(
                         [dbc.DropdownMenuItem("Bitcoin (BTC)", id="Bitcoin-3"),
                         dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-3"),
+                        dbc.DropdownMenuItem("Ethereum (ETH)", id = "Ethereum-3", href='/anomaly/models/eth'),
                         dbc.DropdownMenuItem(divider=True),
                         html.Div([
                             html.Span("to be implemented in future", className='disabled-info'),
@@ -144,24 +144,25 @@ def update_dropdown(n1, n2, n3):
 
 def update_menu(selected_cryptocurrency):
     print(selected_cryptocurrency)
-    if selected_cryptocurrency == 'Ethereum (ETH)':
-        return [
-                        dbc.Accordion(
-                        dbc.AccordionItem(
-                            dbc.ListGroup([
-                                dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-                                dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-                                dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-                                dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
-                            ], flush=True, style={'font-size': '14px'}),
+    # if selected_cryptocurrency == 'Ethereum (ETH)':
+    #     return [
+    #                     dbc.Accordion(
+    #                     dbc.AccordionItem(
+    #                         dbc.ListGroup([
+    #                             dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+    #                             dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+    #                             dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+    #                             dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
+    #                         ], flush=True, style={'font-size': '14px'}),
                             
-                            title="Address Detection"
-                        ), 
-                        flush=True, start_collapsed=True, style = {'width':'300px', 'margin-top':'15px', 'margin-left': 'auto', 'margin-right': 'auto'}
-                    )
-                ]
+    #                         title="Address Detection"
+    #                     ), 
+    #                     flush=True, start_collapsed=True, style = {'width':'300px', 'margin-top':'15px', 'margin-left': 'auto', 'margin-right': 'auto'}
+    #                 )
+    #             ]
 
-    else:
+    # else:
+    if True:
         return [
                     dbc.Accordion(
                         dbc.AccordionItem(
@@ -283,6 +284,7 @@ def create_cluster(df, model):
 def create_table(df, model):
     tables = []
     model_name = str(model.split("_")[1])
+    db_column = f'y_{model_name}_pred'
     
     if model.split("_")[-1] != "eth":
         tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
@@ -327,7 +329,8 @@ def create_table(df, model):
         
         tables.append(dash_table.DataTable(
             columns = [],
-            data = df.to_dict('records'),
+            # data = df.to_dict('records'),
+            data = df[df[db_column] == 1].to_dict('records'), # edited by ETH group 11/11/23
             style_as_list_view = True,
             page_size = 10,
             style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
