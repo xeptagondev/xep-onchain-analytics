@@ -19,7 +19,6 @@ session = boto3.Session(aws_access_key_id = config['ACCESS_KEY'], aws_secret_acc
 s3_client = session.client('s3')
 blockchair_key = config['BLOCKCHAIR_KEY']
 data_type = config["DATA_TYPE"]
-num_files = config.get("NUM_FILES", 10)
 print("Connected to S3 bucket")
 
 def handler(event = None, context= None):
@@ -40,13 +39,12 @@ def handler(event = None, context= None):
     else:
         # sort existing dates
         existing_dates = df["Date"]
-        existing_dates = existing_dates.sort_values()
+        existing_dates = existing_dates.sort_values().tolist()
         print("Existing dates: ", existing_dates)
         # last value
-        last_value = existing_dates.iloc[-1]
+        last_value = existing_dates[-1]
         print("Last value: ", last_value)
-        objects = s3_client.list_objects(Bucket=bucket, Prefix=prefix, Marker=prefix + last_value.strftime("%Y%m%d") + ".parquet")
-    
+        objects = s3_client.list_objects(Bucket=bucket, Prefix=prefix, Marker= "Ethereum-Raw/blocks/blockchair_ethereum_blocks_" + last_value.strftime("%Y%m%d") + ".parquet")
     # Create temporary table to store data
     create_blocks_mined_table = '''
         CREATE TEMP TABLE blocks_mined (Date TIMESTAMP, "Blocks Mined" INTEGER)
@@ -55,17 +53,22 @@ def handler(event = None, context= None):
     # Process parquet files for blocks data
     print("Starting to process files")
     # Loop for all parquet files
-    counter = 0
     for i in objects.get('Contents'):
+        if i.get('Key') == "Ethereum-Raw/blocks/log.txt":
+            print("Only log left")
+            break
         # read current object
         s3_object = s3_client.get_object(Bucket="onchain-downloads", Key=i.get('Key'))
         day = i.get('Key').split('/')[2].split('.')[0].split("_")[3]
         day = datetime.strptime(day, '%Y%m%d').date()
+        if day in existing_dates:
+            print("Caught by first")
+            continue
         day = datetime.combine(day, datetime.min.time())
         if day in existing_dates:
+            print("Caught by second")
             continue
         print("Processing file for ", day)
-
         blocks_df = pq.read_table(io.BytesIO(s3_object['Body'].read())).to_pandas()
         calculate_blocks_mined = "SELECT max(id) - min(id) + 1 FROM blocks_df"
         print("Calculating blocks mined")
