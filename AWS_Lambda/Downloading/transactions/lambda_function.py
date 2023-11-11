@@ -87,35 +87,21 @@ def download_from_blockchair(folders, blockchair_key = blockchair_key, number_of
             print(e)
             break
         print("Downloaded " + folder)
-
-
-        try: #use duckdb to convert to parquet
-            print("Trying to convert " + folder + " with duckdb")
-
-            
-            # tsv to parquet
-            str1 = "COPY (SELECT * FROM read_csv('"
-            str2 = "', delim='\t', header=True, sample_size=-1, ignore_errors = True, parallel = False, columns = " 
-            str3 = "{'id' : 'BIGINT', 'hash' : 'VARCHAR', 'time' : 'VARCHAR', 'size' : 'BIGINT', 'miner' : 'VARCHAR', 'extra_data_hex' : 'VARCHAR', 'difficulty' : 'BIGINT', 'gas_used' : 'BIGINT', 'gas_limit' : 'BIGINT', 'logs_bloom' : 'BIGINT', 'mix_hash' : 'VARCHAR', 'nonce' : 'BIGINT', 'receipts_root' : 'VARCHAR', 'sha3_uncles' : 'VARCHAR', 'state_root' : 'VARCHAR', 'total_difficulty' : 'BIGINT', 'transactions_root' : 'VARCHAR', 'uncle_count' : 'BIGINT', 'transaction_count' : 'BIGINT', 'synthetic_transaction_count' : 'BIGINT', 'call_count' : 'BIGINT', 'synthetic_call_count' : 'BIGINT', 'value_total' : 'BIGINT', 'value_total_usd' : 'DOUBLE', 'internal_value_total' : 'BIGINT', 'internal_value_total_usd' : 'DOUBLE', 'generation' : 'BIGINT', 'generation_usd' : 'DOUBLE', 'uncle_generation' : 'BIGINT', 'uncle_generation_usd' : 'DOUBLE', 'fee_total' : 'BIGINT', 'fee_total_usd' : 'BIGINT', 'reward' : 'BIGINT', 'reward_usd' : 'DOUBLE'}"
-            str4 = ")) TO '"
-            str5 = ".parquet'"
-
-            query = str1 + downloaded_file + str2 + str3 + str4 + "/tmp/" + folder_name + str5
-            conn.execute(query)
-            print("Converted " + folder + " with duckdb")
-            print("Uploading to S3 " + folder)
-
-            s3_client.upload_file("/tmp/" + folder_name + ".parquet", bucket_name, "Ethereum-Raw/" + data_type + "/" + folder_name + ".parquet")
-        except RuntimeError: # use pandas to convert
-            print("Trying to convert " + folder + " pandas")
-            with gzip.open(downloaded_file, 'rb') as unzipped_file:
-                print("Reading " + folder)
-                df = pd.read_csv(unzipped_file, sep='\t')
+        with gzip.open(downloaded_file, 'rb') as unzipped_file:
+            print("Reading " + folder)
+            df = pd.read_csv(unzipped_file, sep='\t')
+            df["fee"] = df["fee"].astype(str) # Change fee to string to avoid error (Integer overflow)
+            try:
                 table = pa.Table.from_pandas(df)
-            with io.BytesIO() as parquet_buffer:
-                pq.write_table(table, parquet_buffer)  # Corrected Parquet write function
-                print("Uploading to S3 " + folder)
-                s3_client.put_object(Bucket= bucket_name, Key= "Ethereum-Raw/" + data_type + "/" + folder_name + ".parquet", Body=parquet_buffer.getvalue())
+            except Exception as e:
+                print("Error reading " + folder)
+                print(e)
+                break
+        with io.BytesIO() as parquet_buffer:
+            pq.write_table(table, parquet_buffer)  # Corrected Parquet write function
+            print("Uploading to S3 " + folder)
+            s3_client.put_object(Bucket= bucket_name, Key= "Ethereum-Raw/" + data_type + "/" + folder_name + ".parquet", Body=parquet_buffer.getvalue())
+
     print("Finished downloading")
     return folder
 
