@@ -6,8 +6,6 @@ import io
 import os
 from sqlalchemy import create_engine
 
-# Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql
-
 # CHANGE TO YOUR DIRECTORY
 os.chdir("xep-onchain-analytics/Frontend")
 
