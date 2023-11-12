@@ -37,7 +37,7 @@ psqlcursor = psqlconn.cursor()
 df_eth_fraud = pd.read_sql('SELECT DISTINCT * FROM "anomaly_predictions_eth"', psqlconn)
 df_eth_fraud_results = pd.read_sql('SELECT DISTINCT * FROM "anomaly_results_eth"', psqlconn)
 
-df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'y_ensemble_pred': 'Illicit Account', 'y_rf_pred': 'Illicit Account',
+df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'y_rf_pred': 'Illicit Account', 'y_ensemble_pred': 'Illicit Account',
                     'to_address': 'Recipient Address', 'from_address': 'Sender Address', 'hash': 'Transaction Hash', 'value': 'Value',
                     'transaction_index': 'Transaction Index', 'gas': 'Gas', 'gas_price': 'Gas Price', 'input': 'Input', 
                     'receipt_cumulative_gas_used': 'Recept Cumulative Gas Used', 'receipt_gas_used': 'Receipt Gas Used', 'block_number': 'Block Number',
@@ -110,7 +110,7 @@ def create_anomaly_models_eth():
 
 # Update dropdown label
 @app.callback(
-    Output('cryptocurrency-select-3', 'label-eth'),
+    Output('cryptocurrency-select-4', 'label-eth'),
     [Input("Bitcoin-4", "n_clicks"), Input("Ethereum-4", "n_clicks"), Input("Tether-4", "n_clicks")]
 )
 
@@ -185,7 +185,7 @@ def create_table_eth(df, model):
         style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
         style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'left', 
                     'color': '#0a275c', 'padding': '5px 10px 5px 10px'},
-        id = 'anomaly-performance-table'
+        id = 'anomaly-performance-table-2'
     ))
 
     model = model.split("_eth")[0]
@@ -215,7 +215,8 @@ def create_table_eth(df, model):
     
     tables.append(dash_table.DataTable(
         columns = [],
-        data = df[df[db_column] == 1].to_dict('records'),
+        # data = df.to_dict('records'),
+        data = df[df[db_column] == 1].to_dict('records'), # edited by ETH group 11/11/23
         style_as_list_view = True,
         page_size = 10,
         style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
@@ -277,7 +278,7 @@ def update_row_dropdown(row_v):
 @app.callback(
     Output('anomaly-table-eth', 'columns'),
     [Input('table-fields-eth', 'value')],
-    Input('anomaly-table-eth', 'children'),
+    Input('anomaly-title-eth', 'children'),
     [State('anomaly-table-eth', 'columns')]
 )
 
@@ -288,16 +289,16 @@ def update_cols_displayed_eth(value, model, columns):
         ml = model.split("using ")[1]
 
         if ml == 'Logistic Regression':
-            model = 'y_logr_pred_eth'
+            model = 'y_logr_pred'
 
         elif ml == 'XGBoost':
-            model = 'y_xgb_pred_eth'
+            model = 'y_xgb_pred'
+
+        elif ml == 'Neural Networks':
+            model == 'y_nn_pred'
 
         elif ml == 'Random Forest':
-            model = 'y_rf_pred_eth'
-
-        elif ml == 'Ensemble Learning':
-            model = 'y_ensemble_pred_eth'
+            model == 'y_rf_pred'
 
         if not value:
             value = [model, 'to_address', 'from_address', 'hash', 'value']
@@ -309,6 +310,6 @@ def update_cols_displayed_eth(value, model, columns):
             })
 
         return columns
-        
+
     except:
         print("This is not address detection!")
