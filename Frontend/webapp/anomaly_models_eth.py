@@ -37,7 +37,7 @@ psqlcursor = psqlconn.cursor()
 df_eth_fraud = pd.read_sql('SELECT DISTINCT * FROM "anomaly_predictions_eth"', psqlconn)
 df_eth_fraud_results = pd.read_sql('SELECT DISTINCT * FROM "anomaly_results_eth"', psqlconn)
 
-df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'y_nn_pred': 'Illicit Account', 'y_rf_pred': 'Illicit Account',
+df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'y_ensemble_pred': 'Illicit Account', 'y_rf_pred': 'Illicit Account',
                     'to_address': 'Recipient Address', 'from_address': 'Sender Address', 'hash': 'Transaction Hash', 'value': 'Value',
                     'transaction_index': 'Transaction Index', 'gas': 'Gas', 'gas_price': 'Gas Price', 'input': 'Input', 
                     'receipt_cumulative_gas_used': 'Recept Cumulative Gas Used', 'receipt_gas_used': 'Receipt Gas Used', 'block_number': 'Block Number',
@@ -135,8 +135,8 @@ def update_menu(selected_cryptocurrency):
                         dbc.ListGroup([
                             dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
                             dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-                            dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-                            dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
+                            dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
+                            dbc.ListGroupItem("Ensemble Learning", action=True, id={"type":'anomaly-ensemble-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
                         ], flush=True, style={'font-size': '14px'}),
                         
                         title="ETH Address Detection"
@@ -148,15 +148,15 @@ def update_menu(selected_cryptocurrency):
 # Update graph display title
 @app.callback(
     Output('anomaly-title-eth', "children"),
-    [Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-nn-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks")]
+    [Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-ensemble-eth", "index": ALL}, "n_clicks")]
 )
 
 def update_title(n1,n2,n3,n4):
     titles_dict = {
                 "anomaly-logr-eth": "Ethereum Illicit Transactions Detected using Logistic Regression",
                 "anomaly-xgb-eth": "Ethereum Illicit Transactions Detected using XGBoost",
-                "anomaly-nn-eth": "Ethereum Illicit Transactions Detected using Neural Networks",
-                "anomaly-rf-eth": "Ethereum Illicit Transactions Detected using Random Forest"
+                "anomaly-rf-eth": "Ethereum Illicit Transactions Detected using Random Forest",
+                "anomaly-ensemble-eth": "Ethereum Illicit Transactions Detected using Ensemble Learning"
                 }
     
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -167,40 +167,6 @@ def update_title(n1,n2,n3,n4):
     mytype = json.loads(selected)["type"]
     return titles_dict[mytype]
         
-
-# Standalone method to reduce repeated chunks in callback below
-def create_fig_eth(df, model):
-    graphs = []
-    default = dict(rangeslider=dict(visible=True, bgcolor="#d0e0e5"),type="date")
-
-    non_features = ['Date', 'index', 'anomaly', 'score']
-    features = sorted(set(df.columns) - set(non_features))
-
-    graphs.append(html.P("The following features were used to detect the outliers:"))
-
-    f_list = []
-    for c in features:
-        f_list.append(c)
-    graphs.append(dbc.ListGroup([dbc.ListGroupItem(c, style={'font-size':'13px', 'color':'#0a275c', 'font-weight':'bold', 'border-top':'None', 'border-bottom':'None', 'border-radius':'0px'}) for c in f_list], 
-                  horizontal=True, style = {'padding-bottom': '10px'}))
-
-    for c in features:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df['Date'], y=df[c], mode='lines', line = dict(color = "#0a275c"), name='normal value'))
-        outlier = df.loc[df['anomaly'] == 1]
-        fig.add_trace(go.Scatter(x=outlier['Date'], y=outlier[c], mode='markers', line = dict(color = "firebrick"), name='outlier'))
-        fig.update_traces(hovertemplate='Date: %{x} <br>Value: %{y}')
-        fig.update_xaxes(default) # adding in default range slider
-        # setting date range limit to fix range slider bug with scatter plots
-        fig.update_xaxes(range=[df['Date'].iloc[0], df['Date'].iloc[-1]],
-                        rangeslider_range=[df['Date'].iloc[0], df['Date'].iloc[-1]])
-        fig.update_xaxes(title_text = "Date")
-        fig.update_yaxes(title_text = c)
-        fig.update_layout(plot_bgcolor='white', title_text = '{} over Time'.format(c), title_x=0.5, title_font_color = 'black', title_font_size=16) 
-        graphs.append(dcc.Graph(id ='{}-{}'.format(model,c), figure = fig))
-
-    return graphs
-
 
 def create_table_eth(df, model):
     tables = []
@@ -242,7 +208,7 @@ def create_table_eth(df, model):
                             value=[model, 'to_address', 'from_address', 'hash', 'value'],
                             multi = True,
                             placeholder = "Select table fields...",
-                            id = 'table-fields')
+                            id = 'table-fields-eth')
             )
         ], width = 6, style={'padding-bottom':'15px'})
     ], justify = 'start'))
@@ -269,11 +235,11 @@ def create_table_eth(df, model):
 
 @app.callback(
     Output("anomaly-graphs-eth", "children"),
-     [Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-nn-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks")],
+     [Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-ensemble-eth", "index": ALL}, "n_clicks")],
     Input('anomaly-title-eth', 'children')
 )
 
-def update_line_chart_eth(logr_eth, xgb_eth, nn_eth, rf_eth, curr_title):
+def update_line_chart_eth(logr_eth, xgb_eth, rf_eth, ensemble_eth, curr_title):
     graphs = []
 
     if ctx.triggered[0]["prop_id"].split(".")[0] != 'anomaly-title-eth':
@@ -287,18 +253,16 @@ def update_line_chart_eth(logr_eth, xgb_eth, nn_eth, rf_eth, curr_title):
         elif mytype == 'anomaly-xgb-eth':
             graphs = create_table_eth(df_eth_fraud, 'y_xgb_pred_eth')
         
-        elif mytype == 'anomaly-nn-eth':
-            graphs = create_table_eth(df_eth_fraud, 'y_nn_pred_eth')
-
         elif mytype == 'anomaly-rf-eth':
             graphs = create_table_eth(df_eth_fraud, 'y_rf_pred_eth')
+
+        elif mytype == 'anomaly-ensemble-eth':
+            graphs = create_table_eth(df_eth_fraud, 'y_ensemble_pred_eth')
 
         return graphs
 
     else:
         return create_table_eth(df_eth_fraud, 'y_logr_pred_eth')
-
-    
 
 # Updating page size of address detection's table 
 @app.callback(
@@ -312,7 +276,7 @@ def update_row_dropdown(row_v):
 # Updating columns shown in table based on dropdown 
 @app.callback(
     Output('anomaly-table-eth', 'columns'),
-    [Input('table-fields', 'value')],
+    [Input('table-fields-eth', 'value')],
     Input('anomaly-table-eth', 'children'),
     [State('anomaly-table-eth', 'columns')]
 )
@@ -321,30 +285,30 @@ def update_cols_displayed_eth(value, model, columns):
     columns = []
 
     try:
-        currency = model.split(" ")[0]
         ml = model.split("using ")[1]
 
-        if currency == "Ethereum":
-            if ml == 'Logistic Regression':
-                model = 'y_logr_pred_eth'
+        if ml == 'Logistic Regression':
+            model = 'y_logr_pred_eth'
 
-            elif ml == 'XGBoost':
-                model = 'y_xgb_pred_eth'
+        elif ml == 'XGBoost':
+            model = 'y_xgb_pred_eth'
 
-            elif ml == 'Neural Networks':
-                model == 'y_nn_pred_eth'
+        elif ml == 'Random Forest':
+            model = 'y_rf_pred_eth'
 
-            elif ml == 'Random Forest':
-                model == 'y_rf_pred_eth'
-    
-            if not value:
-                value=[model, 'to_address', 'from_address', 'hash', 'value']
-            for feature in value:
-                columns.append({
-                    'name': df_illicit_cols_eth[feature],
-                    'id': feature
-                })
-            return columns
+        elif ml == 'Ensemble Learning':
+            model = 'y_ensemble_pred_eth'
+
+        if not value:
+            value = [model, 'to_address', 'from_address', 'hash', 'value']
+
+        for feature in value:
+            columns.append({
+                'name': df_illicit_cols_eth[feature],
+                'id': feature
+            })
+
+        return columns
         
     except:
         print("This is not address detection!")

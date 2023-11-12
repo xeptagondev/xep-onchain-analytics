@@ -42,23 +42,12 @@ df_illicit_results = pd.read_sql('SELECT distinct * FROM "anomaly_results"', psq
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
 
-df_eth_fraud = pd.read_sql('SELECT DISTINCT * FROM "anomaly_predictions_eth"', psqlconn)
-df_eth_fraud_results = pd.read_sql('SELECT DISTINCT * FROM "anomaly_results_eth"', psqlconn)
-
 df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 
                    'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 
                    'spending_value_usd': 'Spending Value (USD)', 'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 
                    'is_coinbase': 'Is Coinbase', 'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 
                    'input_total_usd': 'Total Input (USD)', 'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
                    'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'}
-
-df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'y_nn_pred': 'Illicit Account', 'y_rf_pred': 'Illicit Account',
-                    'to_address': 'Recipient Address', 'from_address': 'Sender Address', 'hash': 'Transaction Hash', 'value': 'Value',
-                    'transaction_index': 'Transaction Index', 'gas': 'Gas', 'gas_price': 'Gas Price', 'input': 'Input', 
-                    'receipt_cumulative_gas_used': 'Recept Cumulative Gas Used', 'receipt_gas_used': 'Receipt Gas Used', 'block_number': 'Block Number',
-                    'block_hash': 'Block Hash', 'year': 'Year', 'month': 'Month', 'day_of_the_month': 'Day of the Month', 'day_name': 'Day Name',
-                    'hour': 'Hour', 'daypart': 'Daypart', 'weekend_flag': 'Is Weekend'
-                    }
 
 content = html.Div([
     dbc.Row([
@@ -144,24 +133,7 @@ def update_dropdown(n1, n2, n3):
 
 def update_menu(selected_cryptocurrency):
     print(selected_cryptocurrency)
-    # if selected_cryptocurrency == 'Ethereum (ETH)':
-    #     return [
-    #                     dbc.Accordion(
-    #                     dbc.AccordionItem(
-    #                         dbc.ListGroup([
-    #                             dbc.ListGroupItem("Logistic Regression", action=True, id={"type":'anomaly-logr-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-    #                             dbc.ListGroupItem("XGBoost", action=True, id={"type":'anomaly-xgb-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-    #                             dbc.ListGroupItem("Neural Networks", action=True, id={"type":'anomaly-nn-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'}),
-    #                             dbc.ListGroupItem("Random Forest", action=True, id={"type":'anomaly-rf-eth', "index": "myindex"}, color='#E8EBEE00', style={'cursor': 'pointer'})
-    #                         ], flush=True, style={'font-size': '14px'}),
-                            
-    #                         title="Address Detection"
-    #                     ), 
-    #                     flush=True, start_collapsed=True, style = {'width':'300px', 'margin-top':'15px', 'margin-left': 'auto', 'margin-right': 'auto'}
-    #                 )
-    #             ]
 
-    # else:
     if True:
         return [
                     dbc.Accordion(
@@ -195,22 +167,17 @@ def update_menu(selected_cryptocurrency):
 @app.callback(
     Output('anomaly-title', "children"),
     [Input({"type": "anomaly-dtc", "index": ALL}, "n_clicks"), Input({"type": "anomaly-knn", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgboost", "index": ALL}, "n_clicks"),
-     Input({"type": "outlier-isoForest", "index": ALL}, "n_clicks"), Input({"type": "outlier-autoEncoder", "index": ALL}, "n_clicks"), Input({"type": "outlier-kmeans", "index": ALL}, "n_clicks"),
-     Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-nn-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks")
+     Input({"type": "outlier-isoForest", "index": ALL}, "n_clicks"), Input({"type": "outlier-autoEncoder", "index": ALL}, "n_clicks"), Input({"type": "outlier-kmeans", "index": ALL}, "n_clicks")
      ]
 )
 
-def update_title(n1,n2,n3,n4,n5,n6,n7,n8,n9,n10):
+def update_title(n1,n2,n3,n4,n5,n6):
     titles_dict = {"anomaly-dtc": "Bitcoin Illicit Transactions Detected using Decision Tree", 
                 "anomaly-knn": "Bitcoin Illicit Transactions Detected using K-Nearest Neighbours", 
                 "anomaly-xgboost": "Bitcoin Illicit Transactions Detected using XGBoost",
                 "outlier-isoForest": "Bitcoin Outliers Detected using Isolation Forest", 
                 "outlier-autoEncoder": "Bitcoin Outliers Detected using Auto-Encoders", 
-                "outlier-kmeans": " Bitcoin Outliers Detected using K-Means Clustering",
-                "anomaly-logr-eth": "Ethereum Illicit Transactions Detected using Logistic Regression",
-                "anomaly-xgb-eth": "Ethereum Illicit Transactions Detected using XGBoost",
-                "anomaly-nn-eth": "Ethereum Illicit Transactions Detected using Neural Networks",
-                "anomaly-rf-eth": "Ethereum Illicit Transactions Detected using Random Forest"}
+                "outlier-kmeans": " Bitcoin Outliers Detected using K-Means Clustering"}
     
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
 
@@ -286,137 +253,76 @@ def create_table(df, model):
     model_name = str(model.split("_")[1])
     db_column = f'y_{model_name}_pred'
     
-    if model.split("_")[-1] != "eth":
-        tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
-        tables.append(dash_table.DataTable(
-            columns = [
-                {'name': 'Accuracy', 'id': 'test_acc', 'type':'text'},
-                {'name': 'Precision', 'id': 'test_precision', 'type':'text'},
-                {'name': 'Recall', 'id': 'test_recall', 'type':'text'},
-                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'text'}
-            ],
-            data = df_illicit_results.loc[df_illicit_results['class'] == model_name].to_dict('records'),
-            style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
-            style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'left', 
-                        'color': '#0a275c', 'padding': '5px 10px 5px 10px'},
-            id = 'anomaly-performance-table'
-        ))
+    tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
+    tables.append(dash_table.DataTable(
+        columns = [
+            {'name': 'Accuracy', 'id': 'test_acc', 'type':'text'},
+            {'name': 'Precision', 'id': 'test_precision', 'type':'text'},
+            {'name': 'Recall', 'id': 'test_recall', 'type':'text'},
+            {'name': 'F1 Score', 'id': 'test_f1score', 'type':'text'}
+        ],
+        data = df_illicit_results.loc[df_illicit_results['class'] == model_name].to_dict('records'),
+        style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
+        style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'left', 
+                    'color': '#0a275c', 'padding': '5px 10px 5px 10px'},
+        id = 'anomaly-performance-table'
+    ))
 
-        df_illicit_cols = {model: 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 
-                    'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 'spending_value_usd': 'Spending Value (USD)', 
-                    'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 'is_coinbase': 'Is Coinbase', 
-                    'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 'input_total_usd': 'Total Input (USD)', 
-                    'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
-                    'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'
-                    }
-
-
-        tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px', 'font-weight':'bold'}))
-        tables.append(dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(value=10, clearable=False, options=[10, 25, 50, 100], id='row-drop')
-            ], width = 2, style={'padding-bottom':'15px'}),
-            dbc.Col([
-                html.Div(
-                    dcc.Dropdown(options=[{'label': y, 'value': x} for x, y in df_illicit_cols.items()],
-                                value=[model, 'account', 'hash', 'value', 'value_usd'],
-                                multi = True,
-                                placeholder = "Select table fields...",
-                                id = 'table-fields')
-                )
-            ], width = 6, style={'padding-bottom':'15px'})
-        ], justify = 'start'))
-        
-        tables.append(dash_table.DataTable(
-            columns = [],
-            # data = df.to_dict('records'),
-            data = df[df[db_column] == 1].to_dict('records'), # edited by ETH group 11/11/23
-            style_as_list_view = True,
-            page_size = 10,
-            style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
-            style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'center',
-                        'color': '#0a275c', 'padding': '12px 15px 12px 15px'},
-            style_table = {'overflowX': 'auto'},
-            style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 
-                        'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'},
-            style_data_conditional=[{
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgb(220, 220, 220, 0.5)',
-            }],
-            id = 'anomaly-table'
-        ))
-
-    else:
-        tables.append(html.P("Model Performance:", style = {'font-weight': 'bold'}))
-        tables.append(dash_table.DataTable(
-            columns = [
-                {'name': 'Accuracy', 'id': 'test_acc', 'type':'text'},
-                {'name': 'Precision', 'id': 'test_precision', 'type':'text'},
-                {'name': 'Recall', 'id': 'test_recall', 'type':'text'},
-                {'name': 'F1 Score', 'id': 'test_f1score', 'type':'text'}
-            ],
-            data = df_eth_fraud_results.loc[df_eth_fraud_results['class'] == model_name].to_dict('records'),
-            style_header = {'font-size':'16px', 'color': 'black', 'text-transform': 'none'},
-            style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'left', 
-                        'color': '#0a275c', 'padding': '5px 10px 5px 10px'},
-            id = 'anomaly-performance-table'
-        ))
-
-        model = model.split("_eth")[0]
-        df_illicit_cols_eth = {model: 'Illicit Account',
-                'to_address': 'Recipient Address', 'from_address': 'Sender Address', 'hash': 'Transaction Hash', 'value': 'Value',
-                'transaction_index': 'Transaction Index', 'gas': 'Gas', 'gas_price': 'Gas Price', 'input': 'Input', 
-                'receipt_cumulative_gas_used': 'Recept Cumulative Gas Used', 'receipt_gas_used': 'Receipt Gas Used', 'block_number': 'Block Number',
-                'block_hash': 'Block Hash', 'year': 'Year', 'month': 'Month', 'day_of_the_month': 'Day of the Month', 'day_name': 'Day Name',
-                'hour': 'Hour', 'daypart': 'Daypart', 'weekend_flag': 'Is Weekend'
+    df_illicit_cols = {model: 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 
+                'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 'spending_value_usd': 'Spending Value (USD)', 
+                'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 'is_coinbase': 'Is Coinbase', 
+                'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 'input_total_usd': 'Total Input (USD)', 
+                'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
+                'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'
                 }
 
-        tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px', 'font-weight':'bold'}))
-        tables.append(dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(value=10, clearable=False, options=[10, 25, 50, 100], id='row-drop')
-            ], width = 2, style={'padding-bottom':'15px'}),
-            dbc.Col([
-                html.Div(
-                    dcc.Dropdown(options=[{'label': y, 'value': x} for x, y in df_illicit_cols_eth.items()],
-                                value=[model, 'to_address', 'from_address', 'hash', 'value'],
-                                multi = True,
-                                placeholder = "Select table fields...",
-                                id = 'table-fields')
-                )
-            ], width = 6, style={'padding-bottom':'15px'})
-        ], justify = 'start'))
-        
-        tables.append(dash_table.DataTable(
-            columns = [],
-            data = df.to_dict('records'),
-            style_as_list_view = True,
-            page_size = 10,
-            style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
-            style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'center',
-                        'color': '#0a275c', 'padding': '12px 15px 12px 15px'},
-            style_table = {'overflowX': 'auto'},
-            style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 
-                        'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'},
-            style_data_conditional=[{
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgb(220, 220, 220, 0.5)',
-            }],
-            id = 'anomaly-table'
-        ))
+
+    tables.append(html.P("Accounts detected to have illicit transactions:", style = {'padding-top':'20px', 'font-weight':'bold'}))
+    tables.append(dbc.Row([
+        dbc.Col([
+            dcc.Dropdown(value=10, clearable=False, options=[10, 25, 50, 100], id='row-drop')
+        ], width = 2, style={'padding-bottom':'15px'}),
+        dbc.Col([
+            html.Div(
+                dcc.Dropdown(options=[{'label': y, 'value': x} for x, y in df_illicit_cols.items()],
+                            value=[model, 'account', 'hash', 'value', 'value_usd'],
+                            multi = True,
+                            placeholder = "Select table fields...",
+                            id = 'table-fields')
+            )
+        ], width = 6, style={'padding-bottom':'15px'})
+    ], justify = 'start'))
+    
+    tables.append(dash_table.DataTable(
+        columns = [],
+        # data = df.to_dict('records'),
+        data = df[df[db_column] == 1].to_dict('records'), # edited by ETH group 11/11/23
+        style_as_list_view = True,
+        page_size = 10,
+        style_header = {'font-size':'16px', 'color': 'black', 'backgroundColor': '#dee9ed', 'text-transform': 'none'},
+        style_cell = {'font-family':'Trebuchet MS', 'font-size':'15px', 'textAlign': 'center',
+                    'color': '#0a275c', 'padding': '12px 15px 12px 15px'},
+        style_table = {'overflowX': 'auto'},
+        style_data = {'overflow': 'hidden', 'textOverflow': 'ellipsis', 
+                    'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'},
+        style_data_conditional=[{
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(220, 220, 220, 0.5)',
+        }],
+        id = 'anomaly-table'
+    ))
 
     return tables
 
 @app.callback(
     Output("anomaly-graphs", "children"),
      [Input({"type": "anomaly-dtc", "index": ALL}, "n_clicks"), Input({"type": "anomaly-knn", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgboost", "index": ALL}, "n_clicks"),
-     Input({"type": "outlier-isoForest", "index": ALL}, "n_clicks"), Input({"type": "outlier-autoEncoder", "index": ALL}, "n_clicks"), Input({"type": "outlier-kmeans", "index": ALL}, "n_clicks"),
-     Input({"type": "anomaly-logr-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-xgb-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-nn-eth", "index": ALL}, "n_clicks"), Input({"type": "anomaly-rf-eth", "index": ALL}, "n_clicks")
+     Input({"type": "outlier-isoForest", "index": ALL}, "n_clicks"), Input({"type": "outlier-autoEncoder", "index": ALL}, "n_clicks"), Input({"type": "outlier-kmeans", "index": ALL}, "n_clicks")
      ],
     Input('anomaly-title', 'children')
 )
 
-def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, logr_eth, xgb_eth, nn_eth, rf_eth, curr_title):
+def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
     graphs = []
 
     if ctx.triggered[0]["prop_id"].split(".")[0] != 'anomaly-title':
@@ -440,18 +346,6 @@ def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, logr_eth, xgb
         
         elif mytype == 'outlier-kmeans':
             graphs = create_cluster(df_kmeans, 'kmeans')       
-
-        elif mytype == 'anomaly-logr-eth':
-            graphs = create_table(df_eth_fraud, 'y_logr_pred_eth')
-
-        elif mytype == 'anomaly-xgb-eth':
-            graphs = create_table(df_eth_fraud, 'y_xgb_pred_eth')
-        
-        elif mytype == 'anomaly-nn-eth':
-            graphs = create_table(df_eth_fraud, 'y_nn_pred_eth')
-
-        elif mytype == 'anomaly-rf-eth':
-            graphs = create_table(df_eth_fraud, 'y_rf_pred_eth')
 
     return graphs
     
@@ -495,28 +389,6 @@ def update_cols_displayed(value, model, columns):
             for feature in value:
                 columns.append({
                     'name': df_illicit_cols[feature],
-                    'id': feature
-                })
-            return columns
-
-        elif currency == "Ethereum":
-            if ml == 'Logistic Regression':
-                model = 'y_logr_pred_eth'
-
-            elif ml == 'XGBoost':
-                model = 'y_xgb_pred_eth'
-
-            elif ml == 'Neural Networks':
-                model == 'y_nn_pred_eth'
-
-            elif ml == 'Random Forest':
-                model == 'y_rf_pred_eth'
-    
-            if not value:
-                value=[model, 'to_address', 'from_address', 'hash', 'value']
-            for feature in value:
-                columns.append({
-                    'name': df_illicit_cols_eth[feature],
                     'id': feature
                 })
             return columns
