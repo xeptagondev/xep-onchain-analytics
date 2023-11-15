@@ -15,13 +15,6 @@ import os
 import numpy as np
 import xgboost as xgb
 from sklearn import preprocessing
-import tensorflow as tf
-from tensorflow.keras import layers
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.metrics import Precision, Recall
-from tensorflow.keras.regularizers import l2
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -56,7 +49,10 @@ query = "SELECT * FROM eth_labeled_data"
 df = pd.read_sql_query(query, con=engine)
 df_copy = df.copy()
 
-cat_features = ['hash', 'from_address', 'to_address', 'input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
+# Drop from_address and to_address so that models can be generalized
+df_copy =  df_copy.drop(columns = ['from_address', 'to_address'])
+
+cat_features = ['hash','input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
 num_features = ['nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'receipt_cumulative_gas_used', 'receipt_gas_used', 'block_number', 'year']
 
 # Basic preprocessing for Label Encoder

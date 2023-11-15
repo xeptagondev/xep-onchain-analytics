@@ -5,13 +5,6 @@ from sqlalchemy import create_engine
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 import duckdb as ddb
-import tensorflow as tf
-from tensorflow.keras import layers
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.metrics import Precision, Recall
-from tensorflow.keras.regularizers import l2
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
 from sklearn import preprocessing
@@ -49,11 +42,14 @@ query = "SELECT * FROM eth_labeled_data"
 df = pd.read_sql_query(query, con=engine)
 df_copy = df.copy()
 
+# Drop from_address and to_address so that models can be generalized
+df =  df.drop(columns = ['from_address', 'to_address'])
+
 select_query = """
 SELECT * FROM anomaly_models_eth
 """
 
-cat_features = ['hash', 'from_address', 'to_address', 'input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
+cat_features = ['hash', 'input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
 num_features = ['nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'receipt_cumulative_gas_used', 'receipt_gas_used', 'block_number', 'year']
 
 # Basic preprocessing for Label Encoder
@@ -77,7 +73,7 @@ xgb_model = pickle.loads(codecs.decode(models[1][2].encode(), "base64"))
 rf_model = pickle.loads(codecs.decode(models[2][2].encode(), "base64"))
 ensemble_model = pickle.loads(codecs.decode(models[3][2].encode(), "base64"))
 
-indicators = ['hash', 'nonce', 'transaction_index', 'from_address', 'to_address', 'value', 'gas', 'gas_price', 'input', 'receipt_cumulative_gas_used', 
+indicators = ['hash', 'nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'input', 'receipt_cumulative_gas_used', 
               'receipt_gas_used', 'block_number', 'block_hash',	'year', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
 
 # Merging predicted result back to dataframe
