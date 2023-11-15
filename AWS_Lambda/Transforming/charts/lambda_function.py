@@ -28,14 +28,14 @@ def handler(event = None, context= None):
             CREATE OR REPLACE TABLE basic_metrics_ethereum AS
             SELECT 
                 CS.Time AS Date,
-                CS."runningsum(Generated value – Blocks (ETH)) – Ethereum" AS 'Circulating Supply',
+                CS."runningsum(Generated value – Blocks (ETH)) – Ethereum"/1000000000000000000 AS 'Circulating Supply',
                 P."Price (ETH/USD) – Ethereum" AS 'Price ($)',
                 ATF."avg(Fee – Transactions (USD)) – Ethereum" AS 'Average Transaction Fee (USD)',
                 ATV."avg(Value total – Blocks (USD)) – Ethereum" AS 'Average Transaction Value (USD)',
                 TV."sum(Value total – Blocks (USD)) – Ethereum" AS 'Transaction Volume (USD)',
                 ABS."avg(Block size (kB)) – Ethereum" AS 'Average Block Size',
                 ABI."f(number(86400)/count()) – Ethereum" AS 'Average Block Interval (s)',
-                AGP."avg(Gas price) – Ethereum" AS 'Average Gas Price (Gwei)',
+                AGP."avg(Gas price) – Ethereum"/1000000000 AS 'Average Gas Price (Gwei)',
                 AGU."avg(Gas used – Blocks (Gwei)) – Ethereum" AS 'Average Gas Used (Gwei)',
                 AGL."avg(Gas limit – Blocks) – Ethereum" AS 'Average Gas Limit',
                 NNC."Transactions count – Ethereum" AS 'Number of New Contracts',
@@ -82,6 +82,17 @@ def handler(event = None, context= None):
 
     # Combine the dataframes
     conn.execute(join_table_query)
+
+    query = "SELECT * FROM basic_metrics_ethereum"
+    conn.execute(query)
+    basic_metrics_df = conn.fetchdf()
+    basic_metrics_df = pa.Table.from_pandas(basic_metrics_df)
+    with io.BytesIO() as parquet_buffer:
+        pq.write_table(basic_metrics_df, parquet_buffer)  # Corrected Parquet write function
+        # upload to s3
+        print("Uploading basic_metrics.parquet to S3")
+        s3_client.put_object(Bucket= bucket, Key= "Ethereum/basic_metrics_ethereum.parquet", Body=parquet_buffer.getvalue())
+
 
     # Compute
 
