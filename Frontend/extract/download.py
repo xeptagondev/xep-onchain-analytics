@@ -2,84 +2,55 @@ from selenium.webdriver.common.by import By
 import os
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from datetime import date
+import pandas as pd
 
-def download():
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage') 
-    chrome_options.add_experimental_option("prefs", {"download.default_directory":r"/xep-onchain-analytics/data/basic_metrics"})
-    driver = webdriver.Chrome('chromedriver', options=chrome_options)
 
-    # Download price
-    driver.get("https://blockchair.com/bitcoin/charts/price")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
+def download(config):
 
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/price.tsv")
+    cryptocurrencies = config['cryptocurrencies']
 
-    # Average Transaction Value in USD
-    driver.get("https://blockchair.com/bitcoin/charts/average-transaction-amount-usd")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
+    for crypto in cryptocurrencies:
 
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/average_transaction_value.tsv")
+        metrics_desc = config['blockchair_metrics'][crypto]
 
-    # Coin Days Destroyed
-    driver.get("https://blockchair.com/bitcoin/charts/coindays-destroyed")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
 
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/cdd.tsv")
+        print(f"curr work dir: {os.getcwd()}")
+        if not os.path.exists(crypto):
+            os.mkdir(crypto)
+        os.chdir(crypto)
+        print(f"after changing dir (should be crypto name): {os.getcwd()}")
 
-    # Circulating Supply
-    driver.get("https://blockchair.com/bitcoin/charts/circulation")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
+        download_dir = os.path.join(os.getcwd(), "basic_metrics")
+        if not os.path.exists(download_dir):
+            os.mkdir(download_dir)
+        print(download_dir)
+        # print(os.getcwd())
 
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/circulating_supply.tsv")
+        chrome_options.add_experimental_option(
+            "prefs", {"download.default_directory": download_dir})
+        driver = webdriver.Chrome(service=Service(
+            ChromeDriverManager().install()), options=chrome_options)
 
-    # Cost per Transaction
-    driver.get("https://blockchair.com/bitcoin/charts/average-transaction-fee-usd")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
+        for charts in metrics_desc:
+            driver.get(f"https://blockchair.com/{crypto}/charts/{charts}")
+            wait_time = 10
+            download_tsv = WebDriverWait(driver, wait_time).until(
+                EC.element_to_be_clickable((By.ID, 'download-tsv-button'))
+            )
 
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/average_transaction_fee.tsv")
+            download_tsv.click()
 
-    # Difficulty
-    driver.get("https://blockchair.com/bitcoin/charts/difficulty")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
-
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/difficulty.tsv")
-
-    # Transaction Count
-    driver.get("https://blockchair.com/bitcoin/charts/transaction-count")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
-
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/transaction_count.tsv")
-
-    # Transaction Volume in BTC
-    driver.get("https://blockchair.com/bitcoin/charts/transaction-volume")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
-
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/transaction_volume_btc.tsv")
-
-    # Transaction Volume in USD
-    driver.get("https://blockchair.com/bitcoin/charts/transaction-volume-usd")
-    download_tsv = driver.find_element(By.ID, "download-tsv-button").click()
-
-    while not os.path.exists("basic_metrics/data.tsv"):
-        time.sleep(1)
-    os.rename("basic_metrics/data.tsv", "basic_metrics/transaction_volume_usd.tsv")
-
+            while not os.path.exists("basic_metrics/data.tsv"):
+                time.sleep(1)
+                print('sleep')
+            os.rename("basic_metrics/data.tsv", f"basic_metrics/{charts}.tsv")
+    os.chdir('../')
