@@ -6,6 +6,7 @@ from get_realised_cap import get_realised_cap
 from compute import compute, compute_eth
 from init_ddb import init_ddb
 from load_to_pg import load_to_pg
+from load_aws_to_pg import load_aws_data_to_pg
 import os
 from datetime import date, timedelta
 import duckdb as ddb
@@ -16,7 +17,7 @@ import json
 os.chdir("data")
 
 # Database configurations
-with open("/Users/h.yek/Desktop/4 nov test kl commit/xep-onchain-analytics/Frontend/extract/config.json") as config_file:
+with open("../config.json") as config_file:
     config = json.load(config_file)
 
 conn = ddb.connect(config['ddb']['database'])
@@ -30,24 +31,24 @@ psqlconn = psycopg2.connect(database=config['postgre']['database'],
 
 # Datetime parameters
 # for instantiating purposes, can just change the start_date to date.today() - timedelta(days = 31) # 09/10/2023
-start_date = date.today() - timedelta(days=73)
+start_date = date.today() - timedelta(days=14)
 # for instantiating purposes, can just change the end_date to date.today() - timedelta(days = 1) # 23/10/2023
-end_date = date.today() - timedelta(days=12)
+end_date = date.today() - timedelta(days=14)
 
 # init_ddb(start_date, end_date, conn) # uncomment this to instantiate the anomaly detection testing database
 
-# 19/12/2016 (2505) but can change to 17/11/2015
-start_date_ = date.today() - timedelta(days=2912)
-end_date_ = date.today() - timedelta(days=2910)
-
-scrape(start_date_, end_date_, config)
+# local implementation
+scrape(start_date, end_date, config)
 download(config)
 convert(config)
 load_basic_metrics(conn, config)
 get_realised_cap(start_date, end_date, conn, config)
-compute(start_date_, end_date_, conn)
-compute_eth(start_date_, end_date_, conn)
-load_to_pg(engine, conn, start_date_, end_date, config)
+compute(start_date, end_date, conn)
+compute_eth(start_date, end_date, conn)
+load_to_pg(engine, conn, start_date, end_date, config)
+
+# uncomment the following to retrieve data for basic & computed metrics from aws s3 bucket and load to pg
+# load_aws_data_to_pg(config, engine)
 
 conn.close()
 psqlconn.close()

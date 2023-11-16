@@ -272,7 +272,6 @@ def compute_eth(start_date, end_date, conn):
         print(total_active_addresses)
         print(total_active_sending_addresses)
         print(total_active_receiving_addresses)
-        # print([day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses]+'\n')
         conn.execute('INSERT INTO active_addresses VALUES (?, ?, ?, ?)', [
                      day, total_active_addresses, total_active_sending_addresses, total_active_receiving_addresses])
 
