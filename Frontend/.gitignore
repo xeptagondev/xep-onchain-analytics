@@ -5,4 +5,3 @@
 !.elasticbeanstalk/*.global.yml
 
 # Config file
-webapp/config.json

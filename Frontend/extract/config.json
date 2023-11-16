@@ -3,8 +3,8 @@
         "database": "data.db"
     },
     "postgre": {
-        "engine": "postgresql://postgres:sql123@localhost:5432/TEST",
-        "database": "TEST",
+        "engine": "postgresql://postgres:sql123@localhost:5432/NEW",
+        "database": "NEW",
         "host": "localhost",
         "user": "postgres",
         "password": "sql123",
