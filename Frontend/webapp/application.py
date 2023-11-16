@@ -2,7 +2,6 @@ from dash import html, dcc
 from dash.dependencies import Input, Output
 from home import create_page_home
 from charts import create_charts
-from charts_ethereum import create_charts_ethereum
 from anomaly_models import create_anomaly_models
 from anomaly_models_eth import create_anomaly_models_eth
 from anomaly import create_anomaly
@@ -21,7 +20,6 @@ app.layout = html.Div([
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
-
 def display_page(pathname):
     if pathname == '/analytics':
         return create_charts()
