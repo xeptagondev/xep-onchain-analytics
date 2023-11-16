@@ -1,3 +1,6 @@
+Frontend/webapp/config.json
+Frontend/Dockerfile
+Frontend/anomaly_eth/Preprocessed_dataset.csv
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
