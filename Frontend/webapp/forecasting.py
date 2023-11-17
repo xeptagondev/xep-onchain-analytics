@@ -131,13 +131,13 @@ content = html.Div([
                     html.Div([
                         html.Span("Select your preferred date range.", className='date-picker-text', style = {'font-size':'12px'}),
                             dmc.DateRangePicker(
-                                id="date-range-picker",
-                                label="Date Range",
+                                id='date-range-picker',
                                 placeholder='DD/MM/YYYY - DD/MM/YYYY',
+                                inputFormat="DD/MM/YYYY",
                                 clearable = True,
                                 minDate=date(2022, 1, 1),
-                                maxDate=date(2023, 11, 13),
-                                style={"width": 330},
+                                maxDate=datetime.now(),
+                                style = {'width': 280}
                             ),
                     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
