@@ -37,11 +37,22 @@ forecast_metrics = ['Price (ETH/USD)']
 
 # Function to split data into train and test
 def train_test_split(data):
+    '''Returns the training and testing sets after splitting the data.'''
     train_size = int(len(data)-7)
     train, test = data.iloc[:train_size], data.iloc[train_size:]
     return train, test
 
 def run_forecasting_model(data, model = 'SMA'):
+    """
+    Runs the selected forecasting model on the provided data.
+
+    Parameters:
+    - data (pd.Series): The input time series data.
+    - model (str): The selected forecasting model ('SMA', 'ARIMA', 'Exp').
+
+    Returns:
+    - forecasted (pd.Series): The time series data with the forecasted values.
+    """
     train, test = train_test_split(data)
 
     num_forecast_steps = len(test)
@@ -61,9 +72,9 @@ def run_forecasting_model(data, model = 'SMA'):
             forecast.iloc[i] = moving_avg
             new_series = pd.Series([moving_avg], index=[forecast.index[i]])
 
-            train = train.append(new_series)
+            forecasted = train.append(new_series)
 
-        return train
+        return forecasted
 
     elif model == 'arima':
         date_range = pd.date_range(start=start_date, periods=len(test), freq='D')
@@ -74,9 +85,9 @@ def run_forecasting_model(data, model = 'SMA'):
         forecast_values = model_fit.forecast(len(test))
         forecast = forecast.fillna(forecast_values)
 
-        train = train.append(forecast)
+        forecasted = train.append(forecast)
 
-        return train
+        return forecasted
     
     elif model == 'exp':
         date_range = pd.date_range(start=start_date, periods=len(test), freq='D')
@@ -87,9 +98,9 @@ def run_forecasting_model(data, model = 'SMA'):
         forecast_values = model_fit.forecast(num_forecast_steps)
         forecast = forecast.fillna(forecast_values)
 
-        train = train.append(forecast)
+        forecasted = train.append(forecast)
 
-        return train
+        return forecasted
 
 content = html.Div([
     dbc.Row([
@@ -160,6 +171,7 @@ content = html.Div([
 ], style = {'padding-bottom':'60px'})
 
 def create_forecasting():
+    '''Returns the layout of the page comprising of navigation bar, content and footer sections.'''
     layout = html.Div([
         nav,
         content,
@@ -175,6 +187,7 @@ def create_forecasting():
 )
 
 def update_dropdown(n1, n2, n3):
+    '''Returns the updated dropdown button label.'''
     label_id = {"Bitcoin-5": "Bitcoin (BTC)", "Ethereum-5": "Ethereum (ETH)", "Tether-5": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Ethereum (ETH)"
@@ -189,6 +202,7 @@ def update_dropdown(n1, n2, n3):
 )
 
 def update_menu(selected_cryptocurrency):
+    '''Returns the updated forecasting model menu based on the selected cryptocurrency.'''
     if selected_cryptocurrency == 'Ethereum (ETH)':
         return [
                     dbc.Accordion(
@@ -214,6 +228,19 @@ def update_menu(selected_cryptocurrency):
 )
 
 def update_line_chart(dates, curr_model, sma_model, arima_model, exponential_model):
+    '''
+    Updates the line chart displayed under the Forecasting tab.
+
+        Parameters:
+            dates (tuple): Start and end dates selected by the user.
+            curr_model (str): Current forecasting model selected by the user.
+            sma_model (list): List of Simple Moving Average button clicks.
+            arima_model (list): List of ARIMA button clicks.
+            exponential_model (list): List of Exponential Smoothing button clicks.
+
+        Returns:
+            fig (plotly figure object): Plotly graph object for displaying line chart.
+    '''
     # provides default range selectors
     default = dict(rangeselector=dict(buttons=list([
                 dict(count=1,
@@ -256,10 +283,10 @@ def update_line_chart(dates, curr_model, sma_model, arima_model, exponential_mod
 
     # Run the forecasting model
     data = df['price']
-    train = run_forecasting_model(data, model)
+    forecasted = run_forecasting_model(data, model)
 
     data = data[data.index <= '2023-11-06']
-    train = train[train.index >= '2023-11-06']
+    forecasted = forecasted[forecasted.index >= '2023-11-06']
 
     # Plotting the actual data and forecast data on the same graph
     fig = go.Figure()
@@ -267,16 +294,16 @@ def update_line_chart(dates, curr_model, sma_model, arima_model, exponential_mod
     if dates:
         start, end = dates
         data = data[(data.index >= start) & (data.index <= end)]
-        train = train[(train.index >= start) & (train.index <= end)]
+        forecasted = forecasted[(forecasted.index >= start) & (forecasted.index <= end)]
     
         # Add points
-        fig.add_trace(go.Scatter(x=train.index, y=train, mode='markers+lines', name='Forecast Points', marker=dict(color='red', size=8)))
+        fig.add_trace(go.Scatter(x=forecasted.index, y=forecasted, mode='markers+lines', name='Forecast Points', marker=dict(color='red', size=8)))
         fig.add_trace(go.Scatter(x=data.index, y=data, mode='markers+lines', name='Actual Points', marker=dict(color='blue', size=8)))
 
     
     else:
         # Add points
-        fig.add_trace(go.Scatter(x=train.index[-50:], y=train.iloc[-50:], mode='markers+lines', name='Forecast Points', marker=dict(color='red', size=8)))
+        fig.add_trace(go.Scatter(x=forecasted.index[-50:], y=forecasted.iloc[-50:], mode='markers+lines', name='Forecast Points', marker=dict(color='red', size=8)))
         fig.add_trace(go.Scatter(x=data.index[-50:], y=data.iloc[-50:], mode='markers+lines', name='Actual Points', marker=dict(color='blue', size=8)))
 
     fig.update_traces(mode="markers+lines", hovertemplate='%{y}')
@@ -295,7 +322,22 @@ def update_line_chart(dates, curr_model, sma_model, arima_model, exponential_mod
 )
 
 def update_title_desc(sma_model, arima_model, exponential_model):
+    '''
+    Updates the graph title and model description based on the selected forecasting model.
+
+            Parameters:
+                    sma_model (int): Number of clicks on the Simple Moving Average model button.
+                    arima_model (int): Number of clicks on the ARIMA model button.
+                    exponential_model (int): Number of clicks on the Exponential Smoothing model button.
+
+            Returns:
+                    tuple: A tuple containing the updated graph title and model description.
+    '''
     selected = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    model_names = {'sma': 'Simple Moving Average',
+                   'arima': 'ARIMA',
+                   'exp':'Exponential Smoothing'}
 
     model_desc = {'sma': 'A simple moving average (SMA) calculates the average of a selected range of prices, usually closing prices, by the number of periods in that range.',
                   'arima': 'An autoregressive integrated moving average model is a form of regression analysis that gauges the strength of one dependent variable relative to other changing variables.',
@@ -309,10 +351,10 @@ def update_title_desc(sma_model, arima_model, exponential_model):
     model = mytype.split('-')[1]
 
     if model == 'sma':
-        return "Simple Moving Average", model_desc['sma']
+        return model_names['sma'], model_desc['sma']
     
     elif model == 'arima':
-        return "ARIMA", model_desc['arima']
+        return model_names['arima'], model_desc['arima']
     
     elif model == 'exp':
-        return "Exponential Smoothing", model_desc['exp']
+        return model_names['exp'], model_desc['exp']
