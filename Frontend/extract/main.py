@@ -48,7 +48,7 @@ compute_eth(start_date, end_date, conn)
 load_to_pg(engine, conn, start_date, end_date, config)
 
 # uncomment the following to retrieve data for basic & computed metrics from aws s3 bucket and load to pg
-load_aws_data_to_pg(config, engine)
+# load_aws_data_to_pg(config, engine)
 
 conn.close()
 psqlconn.close()

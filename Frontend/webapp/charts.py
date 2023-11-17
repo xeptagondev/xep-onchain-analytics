@@ -108,7 +108,7 @@ content = html.Div([
                                 clearable = True,
                                 minDate=date(2009, 1, 3),
                                 maxDate=datetime.now(),
-                                style = {'width':'250px'}
+                                style = {'width': 280}
                             ),
                     ], className='date-picker-div', style = {'display':'inline-block', 'position': 'relative', 'float':'right', 'margin-top':'13px'})
                 ]),
@@ -246,9 +246,8 @@ def update_metrics(searchterm, ts, md_data):
         return [show_metrics_list(f"{i}", names_df) for i in range(len(names_df))]
 
 # Method to plot metrics computed using multiple columns
-def plot_multi_column_metrics(fig, computed_metrics_df, metric):
-    multi_column_metrics = {'Transaction Count by Value': 'Transaction Count'}
-    to_search = multi_column_metrics[metric]
+def plot_multi_column_metrics(fig, computed_metrics_df, metrics_desc_df, metric):
+    to_search = metrics_desc_df[metrics_desc_df['metric_name'] == metric]['search_string'].values[0]
 
     cols = [c for c in computed_metrics_df.columns if c.startswith(to_search)]
     for c in cols:
@@ -259,13 +258,13 @@ def plot_multi_column_metrics(fig, computed_metrics_df, metric):
     return fig
 
 # Method to plot computed metrics
-def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metric, price_axis_scale, metric_axis_scale): # need basic_metrics_df to get price data
-    multi_column_metrics = {'Transaction Count by Value': 'Transaction Count'}
+def plot_computed_metrics(fig, computed_metrics_df, basic_metrics_df, metrics_desc_df, metric, price_axis_scale, metric_axis_scale): # need basic_metrics_df to get price data
+    need_multi_column = metrics_desc_df[metrics_desc_df['metric_name'] == metric]['plot_using_multiple_columns'].values[0]
 
-    if (metric not in multi_column_metrics):
+    if not need_multi_column:
         fig.add_trace(go.Scatter(x=computed_metrics_df['Date'], y=computed_metrics_df[metric], yaxis='y1', name=metric, mode='lines', line = dict(color = "#3d90e3"))) # original colour - #0a275c
     else:
-        plot_multi_column_metrics(fig, computed_metrics_df, metric)
+        plot_multi_column_metrics(fig, computed_metrics_df, metrics_desc_df, metric)
 
     fig.add_trace(go.Scatter(x=computed_metrics_df['Date'], y=basic_metrics_df["Price ($)"], yaxis='y2', name='Price ($)', mode='lines', line = dict(color = "#0a275c"))) # plotting price data on same chart
     
@@ -397,7 +396,7 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
         if is_computed: # computed metric
             filtered_df = cm_df[cm_df['Date'].between(start, end)]
             fig = go.Figure()
-            plot_computed_metrics(fig, filtered_df, bm_df, curr_metric, price_axis_scale, metric_axis_scale) # bm_df is for price data
+            plot_computed_metrics(fig, filtered_df, bm_df, md_df, curr_metric, price_axis_scale, metric_axis_scale) # bm_df is for price data
         else: # basic metrics
             filtered_df = bm_df[bm_df['Date'].between(start, end)]
             fig = go.Figure()
@@ -414,7 +413,7 @@ def update_line_chart(dates, curr_metric, price_axis_scale, metric_axis_scale, b
             curr_metric = "Difficulty"
         if is_computed: # computed metric
             fig = go.Figure()
-            plot_computed_metrics(fig, cm_df, bm_df, curr_metric, price_axis_scale, metric_axis_scale)
+            plot_computed_metrics(fig, cm_df, bm_df, md_df, curr_metric, price_axis_scale, metric_axis_scale)
         else: # basic metric
             fig = go.Figure()
             plot_basic_metrics(fig, bm_df, curr_metric, price_axis_scale, metric_axis_scale)
