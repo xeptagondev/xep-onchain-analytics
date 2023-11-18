@@ -41,13 +41,19 @@ df_illicit = pd.read_sql('SELECT * FROM "anomaly_predictions"', psqlconn)
 df_illicit_results = pd.read_sql('SELECT distinct * FROM "anomaly_results"', psqlconn)
 df_kmeans["anomaly"] = df_kmeans["anomaly"].astype(str)
 df_kmeans["cluster"] = df_kmeans["cluster"].astype(str)
-
 df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit Account', 'account': 'Recipient Address', 'hash': 'Transaction Hash', 
                    'value': 'Value (BTC)', 'value_usd': 'Value (USD)', 'is_from_coinbase': 'Is From Coinbase', 'is_spendable': 'Is Spendable', 'spending_index': 'Spending Index', 
                    'spending_value_usd': 'Spending Value (USD)', 'lifespan': 'Lifespan', 'cdd': 'CDD', 'size': 'Size', 'weight': 'Weight', 'version': 'Version', 'lock_time': 'Lock Time', 
                    'is_coinbase': 'Is Coinbase', 'has_witness': 'Has Witness', 'input_count': 'Input Count', 'output_count': 'Output Count', 'input_total': 'Total Input (BTC)', 
                    'input_total_usd': 'Total Input (USD)', 'output_total': 'Total Output (BTC)', 'output_total_usd': 'Total Output (USD)', 'fee': 'Fee (BTC)', 'fee_usd': 'Fee (USD)', 
                    'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'}
+
+# Convert metric values to xx.x%
+metrics = ['train_acc', 'train_precision', 'train_recall', 'train_f1score', 'test_acc', 'test_precision', 'test_recall', 'test_f1score']
+for metric in metrics:
+    df_illicit_results[metric] = pd.to_numeric(df_illicit_results[metric])
+    df_illicit_results[metric] = pd.Series(["{0:.1f}%".format(val * 100) for val in df_illicit_results[metric]], index = df_illicit_results.index)
+    
 
 content = html.Div([
     dbc.Row([
@@ -103,6 +109,7 @@ content = html.Div([
 
 
 def create_anomaly_models():
+    '''Returns the layout of the page comprising of navigation bar, content and footer sections.'''
     layout = html.Div([
         nav,
         content,
@@ -119,6 +126,7 @@ def create_anomaly_models():
 )
 
 def update_dropdown(n1, n2, n3):
+    '''Returns the updated dropdown button label.'''
     label_id = {"Bitcoin-3": "Bitcoin (BTC)", "Ethereum-3": "Ethereum (ETH)", "Tether-3": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Bitcoin (BTC)"
@@ -132,8 +140,7 @@ def update_dropdown(n1, n2, n3):
 )
 
 def update_menu(selected_cryptocurrency):
-    print(selected_cryptocurrency)
-
+    '''Returns the updated model menu based on the selected cryptocurrency.'''
     if True:
         return [
                     dbc.Accordion(
@@ -172,6 +179,7 @@ def update_menu(selected_cryptocurrency):
 )
 
 def update_title(n1,n2,n3,n4,n5,n6):
+    '''Returns the updated title based on the selected cryptocurrency.'''
     titles_dict = {"anomaly-dtc": "Bitcoin Illicit Transactions Detected using Decision Tree", 
                 "anomaly-knn": "Bitcoin Illicit Transactions Detected using K-Nearest Neighbours", 
                 "anomaly-xgboost": "Bitcoin Illicit Transactions Detected using XGBoost",
@@ -190,6 +198,17 @@ def update_title(n1,n2,n3,n4,n5,n6):
 
 # Standalone method to reduce repeated chunks in callback below
 def create_fig(df, model):
+    '''
+        Generates a list of Dash components representing time-series graphs for normal and outlier values.
+
+                Parameters:
+                        df (pd.DataFrame): The input DataFrame containing time-series data.
+                        model (str): The name or identifier associated with the anomaly detection model.
+
+                Returns:
+                        graphs (list): A list of Dash components representing time-series graphs for each feature with normal
+                                        values and detected outliers over time.
+    '''
     graphs = []
     default = dict(rangeslider=dict(visible=True, bgcolor="#d0e0e5"),type="date")
 
@@ -222,6 +241,16 @@ def create_fig(df, model):
     return graphs
 
 def create_cluster(df, model):
+    '''
+    Generates Dash components to visualize clusters and outliers using K-Means clustering.
+
+            Parameters:
+                df (pd.DataFrame): The input DataFrame containing data for clustering.
+                model (str): The name or identifier associated with the clustering model.
+
+            Returns:
+                graphs (list): A list of Dash components representing scatter plots for clusters and outlier detection.
+    '''
     graphs = []
 
     non_features = ['Date', 'index', 'anomaly', 'cluster', 'Principal Component 1', 'Principal Component 2']
@@ -249,6 +278,7 @@ def create_cluster(df, model):
     return graphs
 
 def create_table(df, model):
+    '''Returns a list of two tables: a table representing model performance metrics and a table of accounts detected to have illicit transactions'''
     tables = []
     model_name = str(model.split("_")[1])
     db_column = f'y_{model_name}_pred'
@@ -323,6 +353,7 @@ def create_table(df, model):
 )
 
 def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
+    '''Update the content of the "anomaly-graphs" component based on the selected model type.'''
     graphs = []
 
     if ctx.triggered[0]["prop_id"].split(".")[0] != 'anomaly-title':
@@ -357,6 +388,7 @@ def update_line_chart(dtc, knn, xgboost, iso, autoEncoder, kmeans, curr_title):
 )
 
 def update_row_dropdown(row_v):
+    '''Updates the number of rows displayed in the Bitcoin anomaly detection table based on the selected value.'''
     return row_v
 
 # Updating columns shown in table based on dropdown 
@@ -368,6 +400,7 @@ def update_row_dropdown(row_v):
 )
 
 def update_cols_displayed(value, model, columns):
+    '''Updates the columns displayed in the Ethereum anomaly detection table based on the selected fields.'''
     columns = []
 
     try:

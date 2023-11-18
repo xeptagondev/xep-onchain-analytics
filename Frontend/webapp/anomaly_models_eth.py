@@ -45,6 +45,13 @@ df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit 
                     'hour': 'Hour', 'daypart': 'Daypart', 'weekend_flag': 'Is Weekend'
                     }
 
+# Convert metric values to xx.x%
+metrics = ['train_acc', 'train_precision', 'train_recall', 'train_f1score', 'test_acc', 'test_precision', 'test_recall', 'test_f1score']
+for metric in metrics:
+    df_eth_fraud_results[metric] = pd.to_numeric(df_eth_fraud_results[metric])
+    df_eth_fraud_results[metric] = pd.Series(["{0:.1f}%".format(val * 100) for val in df_eth_fraud_results[metric]], index = df_eth_fraud_results.index)
+    
+
 content = html.Div([
     dbc.Row([
             # Control panel column
@@ -99,6 +106,7 @@ content = html.Div([
 
 
 def create_anomaly_models_eth():
+    '''Returns the layout of the page comprising of navigation bar, content and footer sections.'''
     layout = html.Div([
         nav,
         content,
@@ -115,6 +123,7 @@ def create_anomaly_models_eth():
 )
 
 def update_dropdown(n1, n2, n3):
+    '''Returns the updated dropdown button label.'''
     label_id = {"Bitcoin-4": "Bitcoin (BTC)", "Ethereum-4": "Ethereum (ETH)", "Tether-4": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Ethereum (ETH)"
@@ -128,6 +137,7 @@ def update_dropdown(n1, n2, n3):
 )
 
 def update_menu(selected_cryptocurrency):
+    '''Returns the updated fraud detection model menu based on the selected cryptocurrency.'''
     if selected_cryptocurrency == 'Ethereum (ETH)':
         return [
                     dbc.Accordion(
@@ -152,6 +162,7 @@ def update_menu(selected_cryptocurrency):
 )
 
 def update_title(n1,n2,n3,n4):
+    '''Returns the updated title based on the selected cryptocurrency.'''
     titles_dict = {
                 "anomaly-logr-eth": "Ethereum Illicit Transactions Detected using Logistic Regression",
                 "anomaly-xgb-eth": "Ethereum Illicit Transactions Detected using XGBoost",
@@ -169,6 +180,7 @@ def update_title(n1,n2,n3,n4):
         
 
 def create_table_eth(df, model):
+    '''Returns a list of two tables: a table representing model performance metrics and a table of accounts detected to have illicit transactions'''
     tables = []
     model_name = str(model.split("_")[1])
     db_column = f'y_{model_name}_pred'
@@ -241,6 +253,7 @@ def create_table_eth(df, model):
 )
 
 def update_line_chart_eth(logr_eth, xgb_eth, rf_eth, ensemble_eth, curr_title):
+    '''Update the content of the "anomaly-graphs-eth" component based on the selected model type.'''
     graphs = []
 
     if ctx.triggered[0]["prop_id"].split(".")[0] != 'anomaly-title-eth':
@@ -272,6 +285,7 @@ def update_line_chart_eth(logr_eth, xgb_eth, rf_eth, ensemble_eth, curr_title):
 )
 
 def update_row_dropdown(row_v):
+    '''Updates the number of rows displayed in the Ethereum anomaly detection table based on the selected value.'''
     return row_v
 
 # Updating columns shown in table based on dropdown 
@@ -283,6 +297,7 @@ def update_row_dropdown(row_v):
 )
 
 def update_cols_displayed_eth(value, model, columns):
+    '''Updates the columns displayed in the Ethereum anomaly detection table based on the selected fields.'''
     columns = []
 
     try:
