@@ -11,12 +11,12 @@ import pandas as pd
 
 
 def download(config):
-
-    cryptocurrencies = config['cryptocurrencies']
+    '''Iterates through each cryptocurrency to download their respective .tsv blockchair charts files specified under config's blockchair_metrics.'''
+    cryptocurrencies = config['cryptocurrencies'] # get list of cryptocurrencies
 
     for crypto in cryptocurrencies:
 
-        metrics_desc = config['blockchair_metrics'][crypto]
+        metrics_desc = config['blockchair_metrics'][crypto] # get list of charts metrics to download
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--headless')
@@ -26,7 +26,7 @@ def download(config):
         print(f"curr work dir: {os.getcwd()}")
         if not os.path.exists(crypto):
             os.mkdir(crypto)
-        os.chdir(crypto)
+        os.chdir(crypto) # cd into crypto from data
         print(f"after changing dir (should be crypto name): {os.getcwd()}")
 
         download_dir = os.path.join(os.getcwd(), "basic_metrics")
@@ -40,6 +40,7 @@ def download(config):
         driver = webdriver.Chrome(service=Service(
             ChromeDriverManager().install()), options=chrome_options)
 
+        # iterate through each metric for that cryptocurrency
         for charts in metrics_desc:
             driver.get(f"https://blockchair.com/{crypto}/charts/{charts}")
             wait_time = 10

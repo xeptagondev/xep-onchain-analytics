@@ -2,6 +2,7 @@ from datetime import timedelta
 import pandas as pd
 
 def get_realised_cap(start_date, end_date, conn, config):
+    '''Creates the realised_cap table for Bitcoin in duckdb if it does not exist and inserts Bitcoin realised cap values into the table.'''
     # Creates timedelta
     delta = end_date - start_date   
 

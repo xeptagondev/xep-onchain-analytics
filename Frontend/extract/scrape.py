@@ -4,9 +4,10 @@ import os
 
 
 def scrape(start_date, end_date, config):
+    '''Iterates through each cryptocurrency to download .tsv.gz files listed in the metric_index into their specified folders for the given period and unzips them to produce .tsv files.'''
     delta = end_date - start_date   # returns timedelta
 
-    cryptocurrencies = config['cryptocurrencies']
+    cryptocurrencies = config['cryptocurrencies'] # get list of cryptocurrencies
 
     for crypto in cryptocurrencies:
         # print(f"curr work dir: {os.getcwd()}")

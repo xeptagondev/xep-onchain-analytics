@@ -28,7 +28,7 @@ Proceed to individual files to check for more details
 ## Authors
 
 - Yek Hui Yee (Ethereum Dashboard)
-- Foo Kailing (Ethereum Dashboard)
+- Fu Kai Ling (Ethereum Dashboard)
 - Loh Dai Jiu (AWS)
 - Hang Jia Hui, Brenda (Ethereum ML)
 - Tan Boon Fong Ernest (Ethereum ML)

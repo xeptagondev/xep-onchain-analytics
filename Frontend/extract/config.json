@@ -51,14 +51,14 @@
         "urls": {"bitcoin": "http://blockdata.loyce.club/", "ethereum": "https://gz.blockchair.com/ethereum/"}
 
     },
-    "cryptocurrencies": ["ethereum"],
+    "cryptocurrencies": ["bitcoin", "ethereum"],
     "pg_table_names": {
         "basic_metrics": {"bitcoin": "basic_metrics", "ethereum": "basic_metrics_ethereum"},
         "computed_metrics": {"bitcoin": "computed_metrics", "ethereum": "computed_metrics_ethereum"}
     },
     "AWS": {
-        "ACCESS_KEY":"APIKEY",
-        "SECRET_KEY":"APIKEY",
+        "AWS_ACCESS_KEY_ID":"APIKEY",
+        "AWS_SECRET_ACCESS_KEY":"APIKEY",
         "crypto_folders": ["Bitcoin", "Ethereum"],
         "data_files": {
             "Bitcoin": [],

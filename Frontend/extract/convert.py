@@ -4,9 +4,10 @@ import glob
 import pandas as pd
 
 def convert(config):
+    '''Iterates through each cryptocurrency to convert all .tsv files to .parquet files before removing original .tsv files.'''
     print(os.getcwd())
 
-    cryptocurrencies = config['cryptocurrencies']
+    cryptocurrencies = config['cryptocurrencies'] # get list of cryptocurrencies
 
     # query string sections
     str1 = "COPY (SELECT * FROM read_csv_auto('"

@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 def init_ddb(start_date, end_date, conn):
+    '''Creates/replaces anomaly detection testing tables if table has 0 rows or inserts values into testing tables for Bitcoin.'''
     delta = end_date - start_date
 
     table_bool = conn.execute("""select count(*) from information_schema.tables where table_name = 'test_input'""")
