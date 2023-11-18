@@ -9,7 +9,7 @@ import os
 # Labels the daily bitcoin transactions as illicit with data from postgresql fetched from the etl pipeline
 
 # Database configurations
-with open('../../config.json') as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to in-memory temporary database

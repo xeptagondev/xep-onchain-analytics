@@ -3,7 +3,7 @@ import psycopg2
 import json
 
 # Database configurations
-with open('../../config.json') as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to PostgreSQL database

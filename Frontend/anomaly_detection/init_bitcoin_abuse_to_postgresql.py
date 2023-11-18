@@ -7,7 +7,7 @@ import os
 # Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql, file to only be ran once for initializaion
 
 # Database configurations
-with open('../../config.json') as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to Database

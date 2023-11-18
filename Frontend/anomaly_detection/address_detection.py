@@ -13,7 +13,7 @@ import codecs
 import json
 
 # Database configurations
-with open('../../config.json') as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Retrieve dataset from duck db

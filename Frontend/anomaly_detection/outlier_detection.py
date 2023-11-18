@@ -30,7 +30,7 @@ import psycopg2
 from sqlalchemy import create_engine
 
 # Database configurations
-with open('../../config.json') as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to Database
