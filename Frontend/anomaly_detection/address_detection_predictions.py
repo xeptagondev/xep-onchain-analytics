@@ -9,25 +9,22 @@ from sklearn.neighbors import KNeighborsClassifier
 import pickle
 import codecs
 import json
-import os
-
-os.chdir("xep-onchain-analytics")
 
 # Database configurations
-with open("extract/config.json") as config_file:
+with open('../../config.json') as config_file:
     config = json.load(config_file)
 
 # Retrieve dataset from duck db
 conn = ddb.connect(config['ddb']['database'])
 df = conn.execute("SELECT * from anomaly_df").fetchdf()
 
-# Connect to Database
+# Connecting to Database
 engine = create_engine(config['postgre']['engine'])
-psqlconn = psycopg2.connect(database = config['postgre']['database'],
-                            host = config['postgre']['host'],
-                            user = config['postgre']['user'],
-                            password = config['postgre']['password'],
-                            port = config['postgre']['port'])
+psqlconn = psycopg2.connect(database = config['postgre_extract']['database'],
+                            host = config['postgre_extract']['host'],
+                            user = config['postgre_extract']['user'],
+                            password = config['postgre_extract']['password'],
+                            port = config['postgre_extract']['port'])
 
 # To execute queries and retrieve data
 cursor = psqlconn.cursor()

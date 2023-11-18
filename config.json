@@ -2,12 +2,20 @@
     "ddb": {
         "database": "data.db"
     },
-    "postgre": {
-        "engine": "postgresql://postgres:090506@localhost:5432/Xeptagon",
-        "database": "Xeptagon",
+    "postgre_webapp": {
+        "engine": "postgresql://postgres:YourPassword@YourHost:5432/YourDatabase",
+        "database": "YourDatabase",
+        "host": "YourHost",
+        "user": "postgres",
+        "password": "YourPassword",
+        "port": "5432"
+    },
+    "postgre_extract": {
+        "engine": "postgresql://postgres:YourPassword@localhost:5432/YourDatabase",
+        "database": "YourDatabase",
         "host": "localhost",
         "user": "postgres",
-        "password": "090506",
+        "password": "YourPassword",
         "port": "5432"
     },
     "APIkey": {
@@ -51,7 +59,7 @@
         "urls": {"bitcoin": "http://blockdata.loyce.club/", "ethereum": "https://gz.blockchair.com/ethereum/"}
 
     },
-    "cryptocurrencies": ["ethereum"],
+    "cryptocurrencies": ["bitcoin", "ethereum"],
     "pg_table_names": {
         "basic_metrics": {"bitcoin": "basic_metrics", "ethereum": "basic_metrics_ethereum"},
         "computed_metrics": {"bitcoin": "computed_metrics", "ethereum": "computed_metrics_ethereum"}

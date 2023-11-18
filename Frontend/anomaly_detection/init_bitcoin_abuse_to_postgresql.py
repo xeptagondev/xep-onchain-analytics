@@ -6,17 +6,16 @@ import os
 
 # Initializes the table to fetch anomalous labels from bitcoin_abuse database into postgresql, file to only be ran once for initializaion
 
-os.chdir("xep-onchain-analytics")
-
 # Database configurations
-with open("extract/config.json") as config_file:
+with open('../../config.json') as config_file:
     config = json.load(config_file)
 
-conn = psycopg2.connect(database = config['postgre']['database'],
-                            host = config['postgre']['host'],
-                            user = config['postgre']['user'],
-                            password = config['postgre']['password'],
-                            port = config['postgre']['port'])
+# Connecting to Database
+conn = psycopg2.connect(database = config['postgre_extract']['database'],
+                            host = config['postgre_extract']['host'],
+                            user = config['postgre_extract']['user'],
+                            password = config['postgre_extract']['password'],
+                            port = config['postgre_extract']['port'])
 
 # To execute queries and retrieve data
 cursor = conn.cursor()

@@ -25,20 +25,17 @@ from sklearn.feature_selection import SelectFromModel
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-# CHANGE TO YOUR DIRECTORY
-os.chdir("xep-onchain-analytics/Frontend")
-
 # Database configurations
-with open("extract/config.json") as config_file:
+with open('../../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to Database
-engine = create_engine(config['postgre']['engine'])
-psqlconn = psycopg2.connect(database = config['postgre']['database'],
-                            host = config['postgre']['host'],
-                            user = config['postgre']['user'],
-                            password = config['postgre']['password'],
-                            port = config['postgre']['port'])
+engine = create_engine(config['postgre_extract']['engine'])
+psqlconn = psycopg2.connect(database = config['postgre_extract']['database'],
+                            host = config['postgre_extract']['host'],
+                            user = config['postgre_extract']['user'],
+                            password = config['postgre_extract']['password'],
+                            port = config['postgre_extract']['port'])
 
 # To execute queries and retrieve data
 cursor = psqlconn.cursor()
