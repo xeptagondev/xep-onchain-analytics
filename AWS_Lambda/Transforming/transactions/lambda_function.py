@@ -22,6 +22,18 @@ num_files = config.get("NUM_FILES", 100)
 print("Connected to S3 bucket")
 
 def handler(event = None, context= None):
+    '''
+    Return success if the function is run successfully
+
+            Logic:
+                    1. Find parquet file with clean data
+                    2. If no parquet file found, get all parquet files from S3 blocks folder
+                    3. If parquet file found, get all parquet files from S3 blocks folder after the last date in the parquet file
+                    4. Create temporary table to store data
+                    5. Process parquet files for transactions data
+                    6. Upload transactions_data table to S3
+
+    '''
 
     conn = ddb.connect()
 

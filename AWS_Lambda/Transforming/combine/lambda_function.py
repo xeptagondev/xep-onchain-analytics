@@ -18,15 +18,16 @@ session = boto3.Session(aws_access_key_id = config['ACCESS_KEY'], aws_secret_acc
 s3_client = session.client('s3')
 print("Connected to S3 bucket")
 
-# docstring template
-'''
-    This function combines all the dataframes into one dataframe and writes it to a parquet file
+
+def handler(event = None, context= None):
+    '''
+    This function combines all the dataframes into one dataframe and writes it to a parquet file. Upload
+    the parquet file to S3 bucket.
     Parameters:
         None
     Returns:
         None
 '''
-def handler(event = None, context= None):
     conn = ddb.connect()
 
     charts_df = s3_client.get_object(Bucket="onchain-downloads", Key="Ethereum/charts_computed.parquet")

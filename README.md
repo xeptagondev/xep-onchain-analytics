@@ -19,11 +19,12 @@ Proceed to individual files to check for more details
 
 ## File Structure
 
-.
+```
 ├── AWS_Lambda                  # AWS Lambda code for Ethereum data pipeline 
 ├── Frontend                    # Code for frontend of dashboard
 ├── Backend                     # AWS EC2 code used for Bitcoin data 
 └── README.md
+```
 
 ## Authors
 

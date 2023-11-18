@@ -22,7 +22,24 @@ data_type = config["DATA_TYPE"]
 print("Connected to S3 bucket")
 
 def handler(event = None, context= None):
+    '''
+    Return success if the function is run successfully
 
+            Parameters:
+                    None
+
+            Returns:
+                    None
+
+            Logic:
+                    1. Find parquet file with clean data
+                    2. If no parquet file found, get all parquet files from S3 blocks folder
+                    3. If parquet file found, get all parquet files from S3 blocks folder after the last date in the parquet file
+                    4. Create temporary table to store data
+                    5. Process parquet files for blocks data
+                    6. Upload blocks_mined table to S3
+
+    '''
     conn = ddb.connect()
 
     bucket = "onchain-downloads"
@@ -100,6 +117,9 @@ def handler(event = None, context= None):
     }
 
 def find_existing_file(s3_client, bucket, prefix):
+    '''
+    Find existing file that contains cleaned data in S3
+    '''
     print("Finding existing file")
     try:
         s3_response = s3_client.get_object(Bucket = "onchain-downloads", Key = "Ethereum/blocks_mined.parquet")
