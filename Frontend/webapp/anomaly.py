@@ -76,6 +76,7 @@ content = html.Div([
 
 
 def create_anomaly():
+    '''Returns the layout of the page comprising of navigation bar, content and footer sections.'''
     layout = html.Div([
         nav,
         content,
@@ -93,6 +94,7 @@ def create_anomaly():
 )
 
 def update_dropdown(n1, n2, n3):
+    '''Returns the updated dropdown button label.'''
     label_id = {"Bitcoin-2": "Bitcoin (BTC)", "Ethereum-2": "Ethereum (ETH)", "Tether-2": "Tether (USDT)"}
     if (n1 is None and n2 is None and n3 is None) or not ctx.triggered:
         return "Bitcoin (BTC)"
@@ -108,7 +110,7 @@ def update_dropdown(n1, n2, n3):
 )
 
 def update_overview(n1, n2):
-
+    '''Returns the updated overview based on the selected cryptocurrency.'''
     overview = """
         Select the relevant token to explore our anomaly detection methods.
     """
