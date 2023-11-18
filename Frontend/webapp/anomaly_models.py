@@ -49,7 +49,7 @@ df_illicit_cols = {'y_knn_pred': 'Illicit Account', 'y_dtc_pred': 'Illicit Accou
                    'fee_per_kb': 'Fee Per KB (BTC)', 'fee_per_kb_usd': 'Fee Per KB (USD)', 'fee_per_kwu': 'Fee Per KWU (BTC)', 'fee_per_kwu_usd': 'Fee Per KWU (USD)', 'cdd_total': 'CDD Total'}
 
 # Convert metric values to xx.x%
-metrics = ['train_acc', 'train_precision', 'train_recall', 'train_f1score', 'test_acc', 'test_precision', 'test_recall', 'test_f1score']
+metrics = ['test_acc', 'test_precision', 'test_recall', 'test_f1score']
 for metric in metrics:
     df_illicit_results[metric] = pd.to_numeric(df_illicit_results[metric])
     df_illicit_results[metric] = pd.Series(["{0:.1f}%".format(val * 100) for val in df_illicit_results[metric]], index = df_illicit_results.index)

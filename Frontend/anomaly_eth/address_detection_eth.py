@@ -18,8 +18,9 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, LabelEncoder, MinMaxScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.ensemble import VotingClassifier
+from sklearn.feature_selection import SelectFromModel
 
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -30,8 +31,6 @@ os.chdir("xep-onchain-analytics/Frontend")
 # Database configurations
 with open("extract/config.json") as config_file:
     config = json.load(config_file)
-
-df = pd.read_csv('anomaly_eth/Dataset.csv')
 
 # Connecting to Database
 engine = create_engine(config['postgre']['engine'])
@@ -45,34 +44,29 @@ psqlconn = psycopg2.connect(database = config['postgre']['database'],
 cursor = psqlconn.cursor()
 dbConnection = engine.connect()
 
+# Store model results
+results = pd.DataFrame(columns=['class', 'test_acc', 'test_precision', 'test_recall', 'test_f1score'])
+results.to_sql(name='anomaly_results_eth', con=engine, if_exists='replace', index=True, index_label= "id")
+results_query = "INSERT INTO anomaly_results_eth VALUES (%s, %s, %s, %s, %s, %s)"
+
+# Store model predictions
+indicators = ['hash', 'nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'input', 'receipt_cumulative_gas_used', 
+              'receipt_gas_used', 'block_number', 'block_hash',	'year', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
+outputs = pd.DataFrame()
+
 query = "SELECT * FROM eth_labeled_data"
 df = pd.read_sql_query(query, con=engine)
-df_copy = df.copy()
+
+df_copy = df.copy(deep=True)
 
 # Drop from_address and to_address so that models can be generalized
-df_copy =  df_copy.drop(columns = ['from_address', 'to_address'])
+df =  df.drop(columns = ['from_address', 'to_address'])
 
-cat_features = ['hash','input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag']
+cat_features = ['hash', 'input', 'month', 'day_of_the_month', 'day_name', 'hour', 'daypart', 'weekend_flag', 'block_hash']
 num_features = ['nonce', 'transaction_index', 'value', 'gas', 'gas_price', 'receipt_cumulative_gas_used', 'receipt_gas_used', 'block_number', 'year']
 
-# Basic preprocessing for Label Encoder
-
-le = preprocessing.LabelEncoder()
-for i in df_copy.columns:
-    if i in cat_features:
-        le.fit(df_copy[i])
-        df_copy[i]=le.transform(df_copy[i])
-
-#ASSIGNS NUMBER TO EVERY LABEL
-for i in df_copy.columns:
-    le.fit(df_copy[i])
-    df_copy[i]=le.transform(df_copy[i])
-
-y = df_copy.pop('is_fraud')
-X = df_copy
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state= 4103)
-
-# LOGISTIC REGRESSION
+# Logistic Regression Model
+lr_data = df.copy(deep=True)
 num_transformer = Pipeline(steps=[('scaler', StandardScaler())])
 cat_transformer = Pipeline(steps=[('onehot', OneHotEncoder(handle_unknown = 'ignore', drop = 'first'))])
 
@@ -83,110 +77,176 @@ preprocessor = ColumnTransformer(
     ]
 )
 
+X = lr_data.drop(['is_fraud'], axis=1)
+y = lr_data['is_fraud']
+
+# Split into train and test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 4103)
 logr_model = Pipeline(steps=[('preprocessor', preprocessor),
                                ('classifier', LogisticRegression(solver = 'liblinear', penalty = 'l1'))])
+
 logr_model.fit(X_train, y_train)
-y_train_logr_pred = logr_model.predict(X_train)
 
-# Training Accuracy
-print("Train Accuracy LogR:", accuracy_score(y_train, y_train_logr_pred))
+# Make predictions on test data
+y_pred = logr_model.predict(X_test)
 
-y_test_logr_pred = logr_model.predict(X_test)
-# Testing Accuracy
-print("Test Accuracy LogR:", accuracy_score(y_test, y_test_logr_pred))
+# Evaluation metrics
+test_accuracy = accuracy_score(y_test, y_pred)
+test_precision = precision_score(y_test, y_pred)
+test_recall = recall_score(y_test, y_pred)
+test_f1_score = f1_score(y_test, y_pred)
 
-# XGB
+cursor.execute(results_query, (0, 'logr', test_accuracy, test_precision, test_recall, test_f1_score))
+psqlconn.commit()
+
+# For merging predictions with data
+X_general = df[indicators]
+y_logr_pred = logr_model.predict(X_general)
+
+outputs['y_logr_pred'] = y_logr_pred
+
+# XGBoost Model
+xgb_data = df.copy(deep=True)
+X = xgb_data.drop(['is_fraud'], axis=1)
+y = xgb_data['is_fraud']
+
+# Split into train and test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 4103)
+
+le = OrdinalEncoder(handle_unknown='use_encoded_value',
+                                 unknown_value=-1)
+for i in X_train.columns:
+    if i in cat_features:
+        le.fit(np.array(X_train[i]).reshape(-1,1))
+        X_train[i]=le.transform(np.array(X_train[i]).reshape(-1,1))
+        X_test[i] = le.transform(np.array(X_test[i]).reshape(-1,1))
+
 params = {'subsample': 0.8, 'reg_lambda': 0.8, 'min_child_weight': 1, 'max_depth': 14, 'learning_rate': 0.03, 'gamma': 1.5, 'colsample_bytree': 0.8}
+
+# Instantiate the classifier
 xgb_model = XGBClassifier(**params)
 xgb_model.fit(X_train, y_train)
 
-# running on Train and Test
-y_train_xgb_pred = xgb_model.predict(X_train)
-print("Train Accuracy XGB:", accuracy_score(y_train, y_train_xgb_pred))
+# Make predictions on test data
+y_pred_test = xgb_model.predict(X_test)
 
-y_test_xgb_pred = xgb_model.predict(X_test)
-print("Test Accuracy XGB:", accuracy_score(y_test, y_test_xgb_pred))
+# Evaluation metrics
+test_accuracy = accuracy_score(y_test, y_pred_test)
+test_precision = precision_score(y_test, y_pred_test)
+test_recall = recall_score(y_test, y_pred_test)
+test_f1_score = f1_score(y_test, y_pred_test)
 
-# RANDOM FOREST
-rf_model = RandomForestClassifier(class_weight = "balanced")
-rf_model.fit(X_train, y_train)
+cursor.execute(results_query, (1, 'xgb', test_accuracy, test_precision, test_recall, test_f1_score))
+psqlconn.commit()
 
-y_train_rf_pred = rf_model.predict(X_train)
-# Training Accuracy
-print("Train Accuracy RF:", accuracy_score(y_train, y_train_rf_pred))
+# For merging predictions with data
+X_general = df[indicators]
+for i in X_general.columns:
+    if i in cat_features:
+        le.fit(np.array(X_general[i]).reshape(-1,1))
+        X_general[i]=le.transform(np.array(X_general[i]).reshape(-1,1))
 
-y_test_rf_pred = rf_model.predict(X_test)
-# Testing Accuracy
-print("Test Accuracy RF:", accuracy_score(y_test, y_test_rf_pred))
+y_xgb_pred = xgb_model.predict(X_general)
+
+outputs['y_xgb_pred'] = y_xgb_pred
+
+# RandomForest Model
+rf_data = df.copy(deep=True)
+X = rf_data.drop(['is_fraud'], axis=1)
+y = rf_data['is_fraud']
+
+# Split into train, test and validation
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 4103)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=4103, stratify=y_train) # 0.25 x 0.8 = 0.2
+
+le = OrdinalEncoder(handle_unknown='use_encoded_value',
+                                 unknown_value=-1)
+for i in X_train.columns:
+    if i in cat_features:
+        le.fit(np.array(X_train[i]).reshape(-1,1))
+        X_train[i]=le.transform(np.array(X_train[i]).reshape(-1,1))
+        X_val[i]= le.transform(np.array(X_val[i]).reshape(-1,1))
+        X_test[i] = le.transform(np.array(X_test[i]).reshape(-1,1))
+
+model = RandomForestClassifier(class_weight = "balanced")
+model.fit(X_train, y_train)
+selection = SelectFromModel(model, threshold=0.035, prefit=True)
+select_X_train = selection.transform(X_train)
+rf_model = RandomForestClassifier(max_depth = 20, class_weight = "balanced")
+rf_model.fit(select_X_train, y_train)
+
+select_X_test = selection.transform(X_test)
+predicted_y_test = rf_model.predict(select_X_test)
+accuracy_test = accuracy_score(y_test, predicted_y_test)
+precision_test = precision_score(y_test, predicted_y_test)
+recall_test = recall_score(y_test, predicted_y_test)
+f1_test = f1_score(y_test, predicted_y_test)
+
+cursor.execute(results_query, (2, 'rf', accuracy_test, precision_test, recall_test, f1_test))
+psqlconn.commit()
+
+# For merging predictions with data
+select_X_general = selection.transform(X_general)
+y_rf_pred = rf_model.predict(select_X_general)
+
+outputs['y_rf_pred'] = y_rf_pred
 
 # ENSEMBLE
+df_ensemble = df.copy(deep=True)
+
+X = df_ensemble.drop(['is_fraud'], axis=1)
+y = df_ensemble['is_fraud']
+
+# Split into train and test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 4103)
+
+le = OrdinalEncoder(handle_unknown='use_encoded_value',
+                                 unknown_value=-1)
+for i in X_train.columns:
+    if i in cat_features:
+        le.fit(np.array(X_train[i]).reshape(-1,1))
+        X_train[i]=le.transform(np.array(X_train[i]).reshape(-1,1))
+        X_test[i] = le.transform(np.array(X_test[i]).reshape(-1,1))
+
+en_logr_model = LogisticRegression(solver = 'liblinear', penalty = 'l1')
+en_xgb_model = XGBClassifier(**params)
+en_rf_model = RandomForestClassifier(max_depth = 20, class_weight = "balanced")
+
 ensemble_model = VotingClassifier(estimators=[
-    ('logr', logr_model),
-    ('xgb', xgb_model),
-    ('rf', rf_model)
+    ('logr', en_logr_model),
+    ('xgb', en_xgb_model),
+    ('rf', en_rf_model)
 ], voting='hard')  # 'hard' for majority voting
 
 ensemble_model.fit(X_train, y_train)
 
-# Predictions
-y_train_ensemble_pred = ensemble_model.predict(X_train)
-y_test_ensemble_pred = ensemble_model.predict(X_test)
+predicted_y_test = ensemble_model.predict(X_test)
 
-print("Train Accuracy ENSEMBLE:", accuracy_score(y_train, y_train_ensemble_pred))
-print("Test Accuracy ENSEMBLE:", accuracy_score(y_test, y_test_ensemble_pred))
+accuracy_test = accuracy_score(y_test, predicted_y_test)
+precision_test = precision_score(y_test, predicted_y_test)
+recall_test = recall_score(y_test, predicted_y_test)
+f1_test = f1_score(y_test, predicted_y_test)
 
-# Pickle models
-pickle_classifier_string_logr = pickle.dumps(logr_model)
-pickle_classifier_string_xgb = pickle.dumps(xgb_model)
-pickle_classifier_string_rf = pickle.dumps(rf_model)
-pickle_classifier_string_ensemble = pickle.dumps(ensemble_model)
+cursor.execute(results_query, (3, 'ensemble', accuracy_test, precision_test, recall_test, f1_test))
+psqlconn.commit()
 
-classifier = ["logr", "xgb", "rf", "ensemble"]
-models = [pickle_classifier_string_logr, pickle_classifier_string_xgb, pickle_classifier_string_rf, pickle_classifier_string_ensemble]
-y_pred_train_model = [y_train_logr_pred, y_train_xgb_pred, y_train_rf_pred, y_train_ensemble_pred]
-y_pred_test_model = [y_test_logr_pred, y_test_xgb_pred, y_test_rf_pred, y_test_ensemble_pred]
+# For merging predictions with data
+y_ensemble_pred = ensemble_model.predict(X_general)
 
-print(bool(dbConnection)) # <- just to keep track of the process
-df = pd.DataFrame(columns=['class', 'model'])
-df.to_sql(name='anomaly_models_eth', con=engine, if_exists='replace', index=True, index_label= "id")
+outputs['y_ensemble_pred'] = y_ensemble_pred
 
-for i in range(0, 4):
-    print(i)
-    pickled = codecs.encode(models[i], "base64").decode()
+# Merging predicted result back to dataframe
+df_output = pd.merge(df_copy, outputs, how = 'left', left_index = True, right_index = True)
+df_output.fillna(0, inplace = True)
+df_output = df_output.loc[df_output['is_fraud'].ne(0) | df_output['y_logr_pred'].ne(0) | df_output['y_xgb_pred'].ne(0) | df_output['y_rf_pred'].ne(0) | df_output['y_ensemble_pred'].ne(0)]
 
-    query = "INSERT INTO anomaly_models_eth VALUES (%s, %s, %s)"
-    cursor.execute(query, (i, classifier[i], pickled))
-    psqlconn.commit()
+with engine.connect() as conn:
+    print(bool(conn)) # <- just to keep track of the process
+    
+    df_output.to_sql(name='anomaly_predictions_eth', con=engine, if_exists='replace', index=True)
+    print("end") # <- just to keep track of the process
 
-    print("commit model")
-
-
-df = pd.DataFrame(columns=['class', 'train_acc', 'train_precision', 'train_recall', 'train_f1score', 'test_acc', 'test_precision', 'test_recall', 'test_f1score'])
-
-df.to_sql(name='anomaly_results_eth', con=engine, if_exists='replace', index=True, index_label= "id")
-
-for i in range(0, 4):
-    print(i)
-    y_pred_train = y_pred_train_model[i]
-    y_pred_test = y_pred_test_model[i]
-
-    train_accuracy = accuracy_score(y_train, y_pred_train)
-    train_precision = precision_score(y_train, y_pred_train)
-    train_recall = recall_score(y_train, y_pred_train)
-    train_f1_score = f1_score(y_train, y_pred_train)
-
-    test_accuracy = accuracy_score(y_test, y_pred_test)
-    test_precision = precision_score(y_test, y_pred_test)
-    test_recall = recall_score(y_test, y_pred_test)
-    test_f1_score = f1_score(y_test, y_pred_test)
-
-    query = "INSERT INTO anomaly_results_eth VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    cursor.execute(query, (i, classifier[i], train_accuracy, train_precision, train_recall, train_f1_score, test_accuracy, test_precision, test_recall, test_f1_score))
-    psqlconn.commit()
 
 cursor.close()
-print("end") # <- just to keep track of the process
-
-
 dbConnection.close()
 psqlconn.close()

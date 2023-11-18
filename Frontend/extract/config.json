@@ -3,11 +3,11 @@
         "database": "data.db"
     },
     "postgre": {
-        "engine": "postgresql://postgres:sql123@localhost:5432/NEW",
-        "database": "NEW",
+        "engine": "postgresql://postgres:090506@localhost:5432/Xeptagon",
+        "database": "Xeptagon",
         "host": "localhost",
         "user": "postgres",
-        "password": "sql123",
+        "password": "090506",
         "port": "5432"
     },
     "APIkey": {

@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 # CHANGE TO YOUR DIRECTORY
 os.chdir("xep-onchain-analytics/Frontend")
 
-
 # Database configurations
 with open("extract/config.json") as config_file:
     config = json.load(config_file)
@@ -26,40 +25,38 @@ conn = psycopg2.connect(database = config['postgre']['database'],
 # To execute queries and retrieve data
 cursor = conn.cursor()
 
-df_copy = df.copy()
-df_copy['is_fraud'] = (df_copy['to_scam'] | df_copy['from_scam']).astype(int)
-df_copy = df_copy.drop(columns = ['from_category', 'to_category', 'from_scam', 'to_scam'])
+df = df.drop(columns = ['from_category', 'to_category'])
+df['is_fraud'] = (df['to_scam'] | df['from_scam']).astype(int)
 
-# Process block_timestamp properly
-# Create more features from "timestamp" as just the timestamp itself is quite useless, model will just memorise it as a string
-
-# Some of the timestamps not in proper format so this code standardizes it
+# Process block_timestamp
 proper_time_end = " UTC"
 
-for index, row in df_copy.iterrows():
+for index, row in df.iterrows():
     last_six_char = row['block_timestamp'][-6:]
     if last_six_char == '+00:00':
-        df_copy.at[index, 'block_timestamp'] = row['block_timestamp'][:-6] + proper_time_end
+        df.at[index, 'block_timestamp'] = row['block_timestamp'][:-6] + proper_time_end
+        
+df['block_timestamp'] = pd.to_datetime(df['block_timestamp'])
 
-df_copy['block_timestamp'] = pd.to_datetime(df_copy['block_timestamp'])
+df['block_timestamp'] = df['block_timestamp'].dt.tz_localize(None)
 
-df_copy['year'] =  df_copy['block_timestamp'].dt.year
-df_copy['month'] = df_copy['block_timestamp'].dt.month
-df_copy['day_of_the_month'] = df_copy['block_timestamp'].dt.day
-df_copy['day_name'] = df_copy['block_timestamp'].dt.strftime('%A')
-df_copy['hour'] = df_copy['block_timestamp'].dt.hour
+df['year'] = df['block_timestamp'].dt.year
+df['month'] = df['block_timestamp'].dt.month
+df['week_of_year'] = df['block_timestamp'].dt.isocalendar().week
+df['day_of_the_month'] = df['block_timestamp'].dt.day
+df['day_name'] = df['block_timestamp'].dt.strftime('%A')
+df['hour'] = df['block_timestamp'].dt.hour
 
 # Define daypart based on the hour
-df_copy['daypart'] = df_copy['block_timestamp'].apply(lambda x: "Morning" if 5 <= x.hour < 12 else
+df['daypart'] = df['block_timestamp'].apply(lambda x: "Morning" if 5 <= x.hour < 12 else
                                               "Afternoon" if 12 <= x.hour < 17 else
                                               "Evening" if 17 <= x.hour < 21 else
                                               "Night")
 
 # Define weekend flag (1 if weekend, else 0)
-df_copy['weekend_flag'] = df_copy['block_timestamp'].apply(lambda x: 1 if x.weekday() >= 5 else 0)
+df['weekend_flag'] = df['block_timestamp'].apply(lambda x: 1 if x.weekday() >= 5 else 0)
 
-# Drop "block_timestamp"
-df_copy = df_copy.drop(columns = ['block_timestamp'])
+df = df.drop(columns=['block_timestamp'])
 
 cursor.execute("DROP TABLE IF EXISTS eth_labeled_data")
 cursor.execute("""CREATE TABLE eth_labeled_data (
@@ -86,7 +83,7 @@ cursor.execute("""CREATE TABLE eth_labeled_data (
                         weekend_flag INT
             )""")
 
-for row in df_copy.itertuples():
+for row in df.itertuples():
     cursor.execute("""INSERT INTO eth_labeled_data (
                         hash, 
                         nonce, 

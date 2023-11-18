@@ -46,7 +46,7 @@ df_illicit_cols_eth = {'y_logr_pred': 'Illicit Account', 'y_xgb_pred': 'Illicit 
                     }
 
 # Convert metric values to xx.x%
-metrics = ['train_acc', 'train_precision', 'train_recall', 'train_f1score', 'test_acc', 'test_precision', 'test_recall', 'test_f1score']
+metrics = ['test_acc', 'test_precision', 'test_recall', 'test_f1score']
 for metric in metrics:
     df_eth_fraud_results[metric] = pd.to_numeric(df_eth_fraud_results[metric])
     df_eth_fraud_results[metric] = pd.Series(["{0:.1f}%".format(val * 100) for val in df_eth_fraud_results[metric]], index = df_eth_fraud_results.index)
