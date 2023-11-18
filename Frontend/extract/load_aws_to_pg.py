@@ -4,8 +4,9 @@ import os
 
 
 def load_aws_data_to_pg(config, engine):
+    '''Fetches basic and computed metrics data from AWS S3 bucket and loads it to local postgres database.'''
     session = boto3.Session(
-        aws_access_key_id=config['AWS']['ACCESS_KEY'], aws_secret_access_key=config['AWS']['SECRET_KEY'])
+        aws_access_key_id=config['AWS']['AWS_ACCESS_KEY_ID'], aws_secret_access_key=config['AWS']['AWS_SECRET_ACCESS_KEY'])
     s3_client = session.client('s3')
 
     aws_crypto_folders = config['AWS']['crypto_folders']

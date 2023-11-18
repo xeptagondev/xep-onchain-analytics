@@ -3,6 +3,7 @@ import os
 
 
 def get_query(cryptocurrency):
+    '''Returns the query for the selected cryptocurrency.'''
     queries = {
         "bitcoin": """
             CREATE OR REPLACE TABLE basic_metrics AS
@@ -72,13 +73,14 @@ def get_query(cryptocurrency):
 
 
 def load_basic_metrics(conn, config):
-    cryptocurrencies = config['cryptocurrencies']
+    '''Iterates through each cryptocurrency to create or replace their basic metrics tables in duckdb.'''
+    cryptocurrencies = config['cryptocurrencies'] # get list of cryptocurrencies
 
     for crypto in cryptocurrencies:
         basic_metrics_dir = os.path.join(os.getcwd(), crypto, 'basic_metrics')
         # os.chdir(crypto)
         # os.chdir('basic_metrics')
-        os.chdir(basic_metrics_dir)
+        os.chdir(basic_metrics_dir) # cd to basic_metrics folder for that cryptocurrency
         query = get_query(crypto)
         print(query)
         conn.execute(query)

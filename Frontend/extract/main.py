@@ -1,4 +1,4 @@
-from scrape import scrape
+from scrape import scrape, scrape_eth
 from convert import convert
 from load_basic_metrics import load_basic_metrics
 from download import download
@@ -39,6 +39,7 @@ end_date = date.today() - timedelta(days=14)
 
 # local implementation
 scrape(start_date, end_date, config)
+scrape_eth(start_date, end_date, config)
 download(config)
 convert(config)
 load_basic_metrics(conn, config)

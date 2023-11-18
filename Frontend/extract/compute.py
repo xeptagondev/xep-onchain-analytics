@@ -8,6 +8,7 @@ import os
 
 
 def compute(start_date, end_date, conn):
+    '''Creates/replaces computed_metrics table if table has 0 rows or inserts values into computed_metrics table in duckdb for Bitcoin.'''
     os.chdir('bitcoin')
 
     # Market Capitalisation
@@ -165,6 +166,7 @@ def compute(start_date, end_date, conn):
 
 
 def compute_eth(start_date, end_date, conn):
+    '''Creates or replaces computed_metrics_ethereum table in duckdb for Ethereum.'''
     print(f"curr working dir: {os.getcwd()}")
     os.chdir('ethereum')
     print(f"checking if inside eth folder: {os.getcwd()}")

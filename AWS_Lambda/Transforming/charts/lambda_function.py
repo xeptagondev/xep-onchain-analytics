@@ -19,6 +19,18 @@ print("Connected to S3 bucket")
 
 
 def handler(event = None, context= None):
+    '''
+    Return success if the function is run successfully
+
+            Logic:
+                    1. Get all the charts data parquet file
+                    2. Join the tables into one
+                    3. Upload basic metrics to S3
+                    4. Compute the metrics
+                    5. Upload the computed metrics to S3
+
+    '''
+
 
     conn = ddb.connect()
     bucket = "onchain-downloads"
@@ -132,7 +144,6 @@ def handler(event = None, context= None):
     '''
     conn.execute(join_result_table_query)
 
-    # Upload blocks_mined table to S3
     query = "SELECT * FROM computed_metrics_ethereum"
     conn.execute(query)
     computed_metrics_df = conn.fetchdf()
@@ -142,7 +153,7 @@ def handler(event = None, context= None):
     with io.BytesIO() as parquet_buffer:
         pq.write_table(table, parquet_buffer)  # Corrected Parquet write function
         # upload to s3
-        print("Uploading transaction_data.parquet to S3")
+        print("Uploading charts_computed.parquet to S3")
         s3_client.put_object(Bucket= bucket, Key= "Ethereum/charts_computed.parquet", Body=parquet_buffer.getvalue())
 
     conn.close()

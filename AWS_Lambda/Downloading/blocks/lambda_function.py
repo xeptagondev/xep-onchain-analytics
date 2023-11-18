@@ -27,9 +27,30 @@ blockchair_key = config['BLOCKCHAIR_KEY']
 data_type = config["DATA_TYPE"]
 num_files = config["NUM_FILES"]
 print("Connected to S3 bucket")
-con = duckdb.connect(database=':memory:')
+con = duckdb.connect()
 
 def handler(event = None, context= None):
+    '''
+    Return success if the function is run successfully
+
+            Parameters:
+                    None
+
+            Returns:
+                    None
+
+            Logic:
+                    1. Get log.txt from S3 Bucket
+                    2. Check if the last downloaded file was downloaded today. If yes, return
+                    3. If not, get the date of the last downloaded file
+                    4. Get all the folders from blockchair using BeautifulSoup
+                    5. Remove the folders that are already downloaded
+                    6. Download the folders, number of folders is specified in config.json (NUM_FILES)
+                    7. Unzip the folders, read them into pandas dataframe, convert into parquet files
+                    8. Upload the parquet files to S3 Bucket
+                    9. Update log.txt in S3 Bucket
+
+    '''
     bucket_name = "onchain-downloads"
     # Get today's date time
     today = datetime.now().date()
@@ -73,6 +94,9 @@ def handler(event = None, context= None):
 
 
 def download_from_blockchair(folders, blockchair_key = blockchair_key, number_of_files = num_files, data_type = data_type, s3_client = s3_client, conn = con):
+    '''
+    Download the folders from blockchair, unzip them, read them into pandas dataframe, convert into parquet files, upload to S3 Bucket
+    '''
     print("Starting download")
     bucket_name = "onchain-downloads"
     for _ in range(number_of_files):
@@ -109,6 +133,9 @@ def download_from_blockchair(folders, blockchair_key = blockchair_key, number_of
 
 
 def get_information_from_log_file(s3_client = s3_client, data_type = data_type):
+    '''
+    Get the information from log.txt in S3 Bucket
+    '''
     try:
         print("Getting information from log file in S3 Bucket")
         s3_response = s3_client.get_object(Bucket = "onchain-downloads", Key = "Ethereum-Raw/"+ data_type +"/log.txt")
@@ -127,15 +154,24 @@ def get_information_from_log_file(s3_client = s3_client, data_type = data_type):
 
 
 def clean_date(date):
+    '''
+    Return a date in the format of YYYY-MM-DD
+    '''
     return date[0:4] + "-" + date[4:6] + "-" + date[6:8]
 
 def string_to_date(date_dict):
+    '''
+    Convert the date in the dictionary from string to datetime
+    '''
     for i in date_dict:
         print(date_dict[i])
         date_dict[i] = datetime.strptime(date_dict[i], "%Y-%m-%d")
     return date_dict
 
 def get_folders_name(data_type):
+    '''
+    Get all the folders from blockchair using BeautifulSoup
+    '''
     # Get all the folder names from website
     # Return a list of folders
     print("Scraping blockchair " + data_type)
