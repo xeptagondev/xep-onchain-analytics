@@ -11,7 +11,8 @@
         "port": "5432"
     },
     "APIkey": {
-        "blockchair": {"bitcoin": "APIKEY", "ethereum": "APIKEY"}
+        "bitcoin": {"blockdata": "APIKEY", "blockchair": "APIKEY", "bitcoinabuse": "APIKEY"},
+        "ethereum": {"blockchair": "APIKEY"}
     },
     "init": {
         "bitcoinabuse": 2
