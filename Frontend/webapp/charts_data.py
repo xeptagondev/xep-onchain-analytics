@@ -3,15 +3,15 @@ import psycopg2
 import json
 
 # Database configurations
-with open("config.json") as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
 # Connecting to PostgreSQL database
-psqlconn = psycopg2.connect(database=config['postgre']['database'],
-                            host=config['postgre']['host'],
-                            user=config['postgre']['user'],
-                            password=config['postgre']['password'],
-                            port=config['postgre']['port'])
+psqlconn = psycopg2.connect(database=config['postgre_webapp']['database'],
+                            host=config['postgre_webapp']['host'],
+                            user=config['postgre_webapp']['user'],
+                            password=config['postgre_webapp']['password'],
+                            port=config['postgre_webapp']['port'])
 
 
 psqlcursor = psqlconn.cursor()

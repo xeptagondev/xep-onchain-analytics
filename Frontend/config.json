@@ -2,12 +2,20 @@
     "ddb": {
         "database": "data.db"
     },
-    "postgre": {
-        "engine": "postgresql://postgres:sql123@localhost:5432/NEW",
-        "database": "NEW",
+    "postgre_webapp": {
+        "engine": "postgresql://postgres:YourPassword@YourHost:5432/YourDatabase",
+        "database": "YourDatabase",
+        "host": "YourHost",
+        "user": "postgres",
+        "password": "YourPassword",
+        "port": "5432"
+    },
+    "postgre_extract": {
+        "engine": "postgresql://postgres:YourPassword@localhost:5432/YourDatabase",
+        "database": "YourDatabase",
         "host": "localhost",
         "user": "postgres",
-        "password": "sql123",
+        "password": "YourPassword",
         "port": "5432"
     },
     "APIkey": {

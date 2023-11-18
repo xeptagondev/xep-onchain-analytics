@@ -29,18 +29,17 @@ from pyod.models.auto_encoder import AutoEncoder
 import psycopg2
 from sqlalchemy import create_engine
 
-os.chdir("xep-onchain-analytics")
-
 # Database configurations
-with open("extract/config.json") as config_file:
+with open('../config.json') as config_file:
     config = json.load(config_file)
 
+# Connecting to Database
 engine = create_engine(config['postgre']['engine'])
-conn = psycopg2.connect(database = config['postgre']['database'],
-                            host = config['postgre']['host'],
-                            user = config['postgre']['user'],
-                            password = config['postgre']['password'],
-                            port = config['postgre']['port'])
+conn = psycopg2.connect(database = config['postgre_extract']['database'],
+                            host = config['postgre_extract']['host'],
+                            user = config['postgre_extract']['user'],
+                            password = config['postgre_extract']['password'],
+                            port = config['postgre_extract']['port'])
 
 cursor = conn.cursor()
 
