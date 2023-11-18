@@ -6,7 +6,7 @@ An opensource framework for on-chain analytics.
 
 ```
 git clone https://github.com/xeptagondev/xep-onchain-analytics.git
-cd xep-onchain-analytics/webapp
+cd xep-onchain-analytics/Frontend/webapp
 ```
 Install all required packages by running:
 ```
@@ -145,6 +145,15 @@ python3 extract/main.py
 Run `init_bitcoin_abuse_to_postgresql.py` and `load_BABD_to_postgresql.py`:
 
 ```
-python3 anomaly_detection/init_bitcoin_abuse_to_postgresql.py
-python3 anomaly_detection/load_BABD_to_postgresql.py
+cd xep-onchain-analytics/Frontend/anomaly_detection
+python3 init_bitcoin_abuse_to_postgresql.py
+python3 load_BABD_to_postgresql.py
+```
+
+Run `preprocess_and_load_to_postgresql.py` and `address_detection_eth.py`:
+
+```
+cd xep-onchain-analytics/Frontend/anomaly_eth
+python3 preprocess_and_load_to_postgresql.py
+python3 address_detection_eth.py
 ```
