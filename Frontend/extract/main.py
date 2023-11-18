@@ -14,20 +14,20 @@ from sqlalchemy import create_engine
 import psycopg2
 import json
 
-os.chdir("data")
-
 # Database configurations
 with open("../config.json") as config_file:
     config = json.load(config_file)
 
 conn = ddb.connect(config['ddb']['database'])
 
-engine = create_engine(config['postgre']['engine'])
-psqlconn = psycopg2.connect(database=config['postgre']['database'],
-                            host=config['postgre']['host'],
-                            user=config['postgre']['user'],
-                            password=config['postgre']['password'],
-                            port=config['postgre']['port'])
+engine = create_engine(config['postgre_extract']['engine'])
+psqlconn = psycopg2.connect(database=config['postgre_extract']['database'],
+                            host=config['postgre_extract']['host'],
+                            user=config['postgre_extract']['user'],
+                            password=config['postgre_extract']['password'],
+                            port=config['postgre_extract']['port'])
+
+os.chdir("data")
 
 # Datetime parameters
 # for instantiating purposes, can just change the start_date to date.today() - timedelta(days = 31) # 09/10/2023
