@@ -43,16 +43,16 @@ def train_test_split(data):
     return train, test
 
 def run_forecasting_model(data, model = 'SMA'):
-    """
+    '''
     Runs the selected forecasting model on the provided data.
 
-    Parameters:
-    - data (pd.Series): The input time series data.
-    - model (str): The selected forecasting model ('SMA', 'ARIMA', 'Exp').
+            Parameters:
+                    - data (pd.Series): The input time series data.
+                    - model (str): The selected forecasting model ('SMA', 'ARIMA', 'Exp').
 
-    Returns:
-    - forecasted (pd.Series): The time series data with the forecasted values.
-    """
+            Returns:
+                    - forecasted (pd.Series): The time series data with the forecasted values.
+    '''
     train, test = train_test_split(data)
 
     num_forecast_steps = len(test)
