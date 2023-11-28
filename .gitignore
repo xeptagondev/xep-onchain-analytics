@@ -1,0 +1,9 @@
+Frontend/Dockerfile
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Config file
+/Backend/docker-compose.yml
